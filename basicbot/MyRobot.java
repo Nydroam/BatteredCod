@@ -1,0 +1,24 @@
+package bc19;
+public class MyRobot extends BCAbstractRobot {
+
+    public Action turn() {
+    	Bot bot;
+        if(me.unit == SPECS.CASTLE){
+        	bot = new CastleBot(this);
+        }
+        if(me.unit == SPECS.PILGRIM){
+        	bot = new PilgrimBot(this);
+        }
+        if(me.unit == SPECS.CRUSADER){
+        	bot = new CrusaderBot(this);
+        }
+        if(me.unit == SPECS.PROPHET){
+        	bot = new ProphetBot(this);
+        }
+        if(me.unit == SPECS.PREACHER){
+        	bot = new PreacherBot(this);
+        }
+        return bot.act();
+
+    }
+}
