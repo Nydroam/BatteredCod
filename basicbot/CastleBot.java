@@ -5,9 +5,13 @@ public class CastleBot extends Bot{
 		super(r);
 	}
 	public Action act(){
-		if(testData == 0){
-			testData = 1;
-			r.log("SET ONCE");
+		if (me.turn == 1){
+		
+			boolean [][] endLocs = new boolean[r.map.length][r.map[0].length];
+			boolean [][] blockers = new boolean[r.map.length][r.map[0].length];
+			endLocs[me.y][me.x] = true;
+			int[][] pathMap = Pathing.BFS(r,endLocs,blockers);
+			Pathing.printMap(pathMap,r);
 		}
 		return null;
 	}
