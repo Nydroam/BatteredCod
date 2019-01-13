@@ -11,6 +11,9 @@ public class Pathing{
 		return createPerm(r,x,y,steps);
 		
 	}
+
+	//Checks the 8 adjacent locations given a distance map and coordinates.
+	//Returns an integer array representing an adjacent direction
 	public static Integer[] checkAdj(MyRobot r, int x, int y, int[][] map){
 		int min = 999;
 		Integer[] move = new Integer[2];
@@ -32,6 +35,8 @@ public class Pathing{
 		}
 		return move;
 	}
+
+	//Returns a list of coordinates that are a certain number steps away from a starting coordinate
 	public static LinkedList<Integer[]> createPerm(MyRobot r, int startX, int startY, int steps){
 		LinkedList<Integer[]> results = new LinkedList<Integer[]>();
 		for(int y = 0 - steps; y <= steps; y++){
@@ -52,7 +57,7 @@ public class Pathing{
 	}
 
 	
-
+	//returns a distance map based on a map of end locations and a range^2
 	public static int[][] rangeBFS(MyRobot r, boolean[][] endLocs, int range){
 		long startTime = System.currentTimeMillis();
 
@@ -103,7 +108,7 @@ public class Pathing{
 		return dirMap;
 	}
 
-	/*Prints a map of integers representing number of steps to destination*/
+	/*Prints a map of integers*/
 	public static void printMap(int[][] map, MyRobot r){
 		for(int y = 0; y < map.length; y++){
 			String line = "";

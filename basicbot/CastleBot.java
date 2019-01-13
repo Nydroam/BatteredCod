@@ -11,9 +11,14 @@ public class CastleBot extends Bot{
 	public Action act(){
 		Robot [] visible = r.getVisibleRobots();
 		if (me.turn == 1){
+			//check symmetry
 			symmetry = Logistics.symmetry(r.map,r);
 			opposite = Logistics.findOpposite(r,me.x,me.y,symmetry);
+			
+			//broadcast enemy castle x location
 			r.castleTalk(opposite.get(0)[1]);
+
+			//spawn a crusader at optimal location
 			boolean[][] endLocs = new boolean[r.map.length][r.map[0].length];
 			LinkedList<Integer[]> range = Pathing.findRange(r,me.x,me.y,3);
 			endLocs[opposite.get(0)[0]][opposite.get(0)[1]] = true;
