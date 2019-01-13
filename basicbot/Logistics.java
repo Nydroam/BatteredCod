@@ -10,6 +10,34 @@ public class Logistics {
 	public static final int ALL = 3;
 	public static MyRobot rob;
 
+	public static LinkedList<Integer[]> findOpposite (MyRobot r, int x, int y, int s){
+		int yMax = r.map.length - 1;
+		int xMax = r.map[0].length - 1;
+		LinkedList<Integer[]> coors = new LinkedList<Integer[]>();
+		
+		if( s == ALL || s == VERTICAL ){
+			Integer[] coor = new Integer[2];
+			coor[0] = y;
+			coor[1] = xMax - x;
+			coors.add(coor);
+		}
+		if( s == ALL || s == HORIZONTAL ){
+			Integer[] coor = new Integer[2];
+			coor[0] = yMax - y;
+			coor[1] = x;
+			coors.add(coor);
+		}
+		if( s == ALL || s == DIAGONAL ){
+			Integer[] coor = new Integer[2];
+			coor[0] = yMax - y;
+			coor[1] = xMax - x;
+			coors.add(coor);
+		}
+		
+		return coors;
+
+	}
+
 	public static int symmetry (boolean[][] map, MyRobot r){
 		long startTime = System.currentTimeMillis();
 		rob = r;
@@ -38,7 +66,7 @@ public class Logistics {
 			halfMap = new LinkedList<Boolean>();	
 		}
 		long diff = System.currentTimeMillis() - startTime;
-		r.log("BFS Time: " + diff + " ms");
+		r.log("Symmetry Time: " + diff + " ms");
 		if(v && h) {
 			return ALL;
 		} else if (v) {
@@ -58,5 +86,19 @@ public class Logistics {
 			}
 		}
 		return true;
+	}
+
+	public static void printBoolMap(MyRobot r, boolean[][] map){
+		for(int i = 0; i < map.length; i++){
+			String line = "";
+			for(int j = 0; j < map[0].length; j++){
+				if(map[i][j])
+					line += "T";
+				else
+					line += "-";
+				line += " ";
+			}
+			r.log(line);
+		}
 	}
 }

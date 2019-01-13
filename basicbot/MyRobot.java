@@ -4,7 +4,6 @@ public class MyRobot extends BCAbstractRobot {
     public Action turn() {
 
     	if(bot == null){
-    		log("new robot made");
 	        if(me.unit == SPECS.CASTLE)
 	        	bot = new CastleBot(this);
 	        if(me.unit == SPECS.CHURCH)
