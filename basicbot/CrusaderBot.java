@@ -6,10 +6,14 @@ public class CrusaderBot extends Bot{
 	LinkedList<Integer[]> opposite;
 	int myCastle = -1;
 	int symmetry;
+	boolean fullyInit;
 	public CrusaderBot(MyRobot r){
 		super(r);
 	}
 	public Action act(){
+		if(!fullyInit && !opposite.equals(null)){
+			fullyInit = fullyInit();
+		}
 		Robot [] visible = r.getVisibleRobots();
 		if(myCastle == -1){
 			for(Robot other : visible)
@@ -30,12 +34,13 @@ public class CrusaderBot extends Bot{
 			}
 		}
 		if(myCastle != -1 && numCastles > 0){
-			if(numCastles > opposite.size()){
+			if(!fullyInit){
 
 				Robot castle = r.getRobot(myCastle);
 				if(!castle.equals(null)&&r.isRadioing(castle)){
 
 					int sig = castle.signal;
+					r.log("signal:" + sig);
 					Integer[] coor = new Integer[2];
 					coor[0] = sig%100;
 					coor[1] =(int)Math.floor(sig/100) % 100;
@@ -50,7 +55,8 @@ public class CrusaderBot extends Bot{
 						opposite.add(coor);
 				}
 			}
-			if(numCastles == opposite.size()){
+			fullyInit = fullyInit();
+			if(fullyInit){
 				for(Integer[] c : opposite){
 					r.log("Enemy Coordinates: " + c[1] + ", " + c[0]);
 				}
@@ -58,5 +64,13 @@ public class CrusaderBot extends Bot{
 		}
 		return null;
 	}
-
+	public boolean fullyInit(){
+		for(Integer[] c: opposite){
+			if(c[0] == -1 || c[1] == -1)
+				return false;
+		}
+		if(opposite.size()<numCastles)
+			return false;
+		return true;
+	}
 }

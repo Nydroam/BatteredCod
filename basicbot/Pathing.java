@@ -122,7 +122,7 @@ public class Pathing{
 	}
 
 	//find the coordinates of the map tile with the smallest number of steps to destination
-	public static Integer[] getNextMove(int startX, int startY, int steps, int[][] map, boolean[][] blockers) {
+	public static Integer[] getNextMove(MyRobot r,int startX, int startY, int steps, int[][] map, boolean[][] blockers) {
 		int min = 999;
 		Integer[] move = new Integer[2];
 		for(int y = 0 - steps; y <= steps; y++){
@@ -133,8 +133,8 @@ public class Pathing{
 				if (checkBounds(r,xCor,yCor,blockers)) {
 					if (map[yCor][xCor] < min){
 						min = map[yCor][xCor];
-						move[1] = j;
-						move[0] = i;
+						move[1] = x;
+						move[0] = y;
 					}
 				}
 			}

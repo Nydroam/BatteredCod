@@ -4,9 +4,11 @@ import java.util.HashMap;
 public class CastleBot extends Bot{
 	int testData = 0;
 	boolean firstCastle = true;
+	boolean fullyInit;
 	int numCastles;
 	LinkedList<Integer[]> opposite;
 	LinkedList<Integer> signalQueue;
+	int signalsNeeded;
 	int symmetry;
 	int currSignal;
 
@@ -15,9 +17,10 @@ public class CastleBot extends Bot{
 	}
 	public void addSignals(){
 		for (Integer[] c : opposite){
+			r.log("X: " + c[1]);
+			r.log("Y: " + c[0]);
 			if((c.length == 3 && c[0] >= 0 && c[1] >= 0) || numCastles == 1){
-				r.log("X: " + c[1]);
-				r.log("Y: " + c[0]);
+				
 				Integer signal = 10000 * numCastles;
 				signal += 100 * c[1];
 				signal += c[0];
@@ -42,8 +45,12 @@ public class CastleBot extends Bot{
 
 		Pathing.printMap(pathMap,r);
 		r.log("building: " + move[1] + ", " + move[0]);
-		addSignals();
-		if(currSignal == 0 && signalQueue.size()>0){
+		signalsNeeded++;
+		if(fullyInit() && opposite.size() == numCastles){
+			addSignals();
+			signalsNeeded--;
+		}
+		if(currSignal == 0 && signalQueue.size()>0 && opposite.size() == numCastles){
 			currSignal = signalQueue.poll();
 			r.log("currSignal " + currSignal);
 			r.signal(currSignal,2);
@@ -54,6 +61,7 @@ public class CastleBot extends Bot{
 		currSignal = 0;
 		Robot [] visible = r.getVisibleRobots();
 		r.log("Turn: " + me.turn);
+		
 		if (me.turn == 1){
 			//check symmetry
 			symmetry = Logistics.symmetry(r.map,r);
@@ -115,7 +123,13 @@ public class CastleBot extends Bot{
 			
 			
 		}
-
+		if(!fullyInit && !opposite.equals(null)){
+			fullyInit = fullyInit();
+		}
+		if(fullyInit){
+			addSignals();
+			signalsNeeded--;
+		}
 		if(signalQueue.size()>0){
 			currSignal = signalQueue.poll();
 			r.signal(currSignal,2);
@@ -123,6 +137,16 @@ public class CastleBot extends Bot{
 		if(r.karbonite >= 20)
 			return spawnUnit(3);
 		return null;
+	}
+
+	public boolean fullyInit(){
+		for(Integer[] c: opposite){
+			if(c[0] == -1 || c[1] == -1)
+				return false;
+		}
+		if(opposite.size()<numCastles)
+			return false;
+		return true;
 	}
 
 }
