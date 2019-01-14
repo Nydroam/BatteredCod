@@ -8,6 +8,12 @@ public class Bot{
 	public Bot(MyRobot r){
 		this.r = r;
 		this.me = r.me;
+		blockers = new boolean[r.map.length][r.map[0].length];
+		for(Robot other : r.getVisibleRobots()){
+			if(r.isVisible(other)){
+				blockers[other.y][other.x] = true;
+			}
+		}
 	}
 	public void update(MyRobot newr){
 		blockers = new boolean[newr.map.length][newr.map[0].length];
