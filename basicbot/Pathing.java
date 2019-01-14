@@ -121,6 +121,27 @@ public class Pathing{
 		return false;
 	}
 
+	//find the coordinates of the map tile with the smallest number of steps to destination
+	public static Integer[] getNextMove(int startX, int startY, int steps, int[][] map, boolean[][] blockers) {
+		int min = 999;
+		Integer[] move = new Integer[2];
+		for(int y = 0 - steps; y <= steps; y++){
+			int offset = (y < 0)?y+steps:steps-y;
+			for(int x = 0 - offset; x <= offset; x++) {
+				int xCor = x + startX;
+				int yCor = y + startY;
+				if (checkBounds(r,xCor,yCor,blockers)) {
+					if (map[yCor][xCor] < min){
+						min = map[yCor][xCor];
+						move[1] = j;
+						move[0] = i;
+					}
+				}
+			}
+		}
+		return move;
+	}
+
 	/*Prints a map of integers*/
 	public static void printMap(int[][] map, MyRobot r){
 		for(int y = 0; y < map.length; y++){
