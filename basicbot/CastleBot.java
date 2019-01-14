@@ -18,7 +18,7 @@ public class CastleBot extends Bot{
 
 		int range = (unitId == 3) ? 9 : 4;
 		int[][] pathMap = Pathing.rangeBFS(r,endLocs,9,blockers);
-		Integer[] move = Pathing.checkAdj(r, me.x, me.y, pathMap);
+		Integer[] move = Pathing.checkAdj(r, me.x, me.y, pathMap, blockers);
 
 		Pathing.printMap(pathMap,r);
 		return r.buildUnit(unitId,move[1],move[0]);

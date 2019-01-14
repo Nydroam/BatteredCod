@@ -88,7 +88,7 @@ public class Pathing{
 
 	//Checks the 8 adjacent locations given a distance map and coordinates.
 	//Returns an integer array representing an adjacent direction
-	public static Integer[] checkAdj(MyRobot r, int x, int y, int[][] map){
+	public static Integer[] checkAdj(MyRobot r, int x, int y, int[][] map, boolean[][] blockers){
 		int min = 999;
 		Integer[] move = new Integer[2];
 		for (int i = -1; i < 2; i++) {
@@ -98,7 +98,7 @@ public class Pathing{
 				}
 				int xCor = x+j;
 				int yCor = y+i;
-				if (xCor >= 0 && xCor < r.map[0].length && yCor >= 0 && yCor < r.map.length && r.map[yCor][xCor]) {
+				if (checkBounds(r,xCor,yCor,blockers)) {
 					if (map[yCor][xCor] < min){
 						min = map[yCor][xCor];
 						move[1] = j;
