@@ -10,6 +10,19 @@ public class CastleBot extends Bot{
 	public CastleBot(MyRobot r){
 		super(r);
 	}
+	public BuildAction spawnUnit(int unitId){
+		//spawn a crusader at optimal location
+		boolean[][] endLocs = new boolean[r.map.length][r.map[0].length];
+		for(Integer[] c : opposite)
+			endLocs[c[0]][c[1]] = true;
+
+		int range = (unitId == 3) ? 9 : 4;
+		int[][] pathMap = Pathing.rangeBFS(r,endLocs,9,blockers);
+		Integer[] move = Pathing.checkAdj(r, me.x, me.y, pathMap);
+
+		Pathing.printMap(pathMap,r);
+		return r.buildUnit(unitId,move[1],move[0]);
+	}
 	public Action act(){
 		Robot [] visible = r.getVisibleRobots();
 		if (me.turn == 1){
@@ -43,17 +56,6 @@ public class CastleBot extends Bot{
 				r.castleTalk(opposite.get(0)[1]);
 			if(numCastles == 3)
 				r.castleTalk(opposite.get(0)[1] + 100);
-			/*
-			//spawn a crusader at optimal location
-			boolean[][] endLocs = new boolean[r.map.length][r.map[0].length];
-			LinkedList<Integer[]> range = Pathing.findRange(r,me.x,me.y,3);
-			endLocs[opposite.get(0)[0]][opposite.get(0)[1]] = true;
-			int[][] pathMap = Pathing.rangeBFS(r,endLocs,9);
-		
-			Integer[] move = Pathing.checkAdj(r, me.x, me.y, pathMap);
-			Pathing.printMap(pathMap,r);
-			return r.buildUnit(3,move[1],move[0]);
-			*/
 		}
 		else if(me.turn <= 3){
 
@@ -85,7 +87,10 @@ public class CastleBot extends Bot{
 				for(Integer[] c : opposite){
 					r.log("Enemy Coordinates: " + c[1] + ", " + c[0]);
 				}
+				
 			}
+			if(r.karbonite >= 20)
+				return spawnUnit(3);
 		}
 		return null;
 	}

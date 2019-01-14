@@ -31,7 +31,7 @@ public class Pathing{
 	}
 
 	//check to see if a tile is in map bounds or if it is not blocked
-	private boolean checkBounds(MyRobot r, int xCor, int yCor, boolean[][] blockers) {
+	public static boolean checkBounds(MyRobot r, int xCor, int yCor, boolean[][] blockers) {
 		return (xCor >= 0 && xCor < r.map[0].length && yCor >= 0 && yCor < r.map.length && 
 			r.map[yCor][xCor] && !blockers[yCor][xCor]);
 	}
@@ -114,7 +114,7 @@ public class Pathing{
 	public static boolean checkForRobot(MyRobot r, int x, int y) {
 		Robot[] visible = r.getVisibleRobots();
 		for (Robot other : visible) {
-			if (other.x == r.x+x && other.y == r.y+y) {
+			if (other.x == r.me.x+x && other.y == r.me.y+y) {
 				return true;
 			}
 		}
