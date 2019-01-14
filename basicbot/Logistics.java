@@ -10,6 +10,7 @@ public class Logistics {
 	public static final int ALL = 3;
 	public static MyRobot rob;
 
+	//takes in x and y of a castle and the symmetry (s) of a map to find an opposite castle
 	public static LinkedList<Integer[]> findOpposite (MyRobot r, int x, int y, int s){
 		int yMax = r.map.length - 1;
 		int xMax = r.map[0].length - 1;
@@ -38,6 +39,7 @@ public class Logistics {
 
 	}
 
+	//takes a boolean map and determines what type of symmetry it is by comparing halves
 	public static int symmetry (boolean[][] map, MyRobot r){
 		long startTime = System.currentTimeMillis();
 		rob = r;
@@ -78,6 +80,7 @@ public class Logistics {
 		}
 	}
 
+	//used in symmetry method to test a single column or row for symmetry
 	public static boolean checkSym(LinkedList<Boolean> hM) {
 		while (hM.size() > 1) {
 			if (!hM.poll().equals(hM.pop())) {
@@ -88,6 +91,7 @@ public class Logistics {
 		return true;
 	}
 
+	//print a visual boolean map
 	public static void printBoolMap(MyRobot r, boolean[][] map){
 		for(int i = 0; i < map.length; i++){
 			String line = "";
