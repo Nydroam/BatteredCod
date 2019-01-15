@@ -7,6 +7,7 @@ public class CrusaderBot extends Bot{
 	int myCastle = -1;
 	int symmetry;
 	boolean fullyInit;
+	int[][] dirMap;
 	public CrusaderBot(MyRobot r){
 		super(r);
 	}
@@ -29,7 +30,6 @@ public class CrusaderBot extends Bot{
 			if(!castle.equals(null) && r.isRadioing(castle)){
 				int sig = castle.signal;
 
-				r.log("signal:" + sig);
 				numCastles = (int)Math.floor(sig/10000);
 			}
 		}
@@ -40,7 +40,6 @@ public class CrusaderBot extends Bot{
 				if(!castle.equals(null)&&r.isRadioing(castle)){
 
 					int sig = castle.signal;
-					r.log("signal:" + sig);
 					Integer[] coor = new Integer[2];
 					coor[0] = sig%100;
 					coor[1] =(int)Math.floor(sig/100) % 100;
@@ -57,9 +56,19 @@ public class CrusaderBot extends Bot{
 			}
 			fullyInit = fullyInit();
 			if(fullyInit){
+				boolean[][] endLocs = new boolean[r.map.length][r.map[0].length];
 				for(Integer[] c : opposite){
-					r.log("Enemy Coordinates: " + c[1] + ", " + c[0]);
+					endLocs[c[0]][c[1]] = true;
 				}
+				if (dirMap == null) {
+					dirMap = Pathing.rangeBFS(r,endLocs,9,blockers);
+				}
+				Integer[] move = Pathing.getNextMove(r,r.me.x,r.me.y,3,dirMap,blockers);
+				r.log("Move to: " + move);
+				if(move[0] == 0 && move[1] == 0) {
+					return null;
+				}
+				return r.move(move[1],move[0]);
 			}
 		}
 		return null;
