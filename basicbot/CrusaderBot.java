@@ -12,9 +12,7 @@ public class CrusaderBot extends Bot{
 		super(r);
 	}
 	public Action act(){
-		if(!fullyInit && !opposite.equals(null)){
-			fullyInit = fullyInit();
-		}
+		
 		Robot [] visible = r.getVisibleRobots();
 		if(myCastle == -1){
 			for(Robot other : visible)
@@ -53,18 +51,31 @@ public class CrusaderBot extends Bot{
 					if(!duplicate)
 						opposite.add(coor);
 				}
+				fullyInit = fullyInit();
 			}
-			fullyInit = fullyInit();
+			
 			if(fullyInit){
+				AttackAction attack = attack();
+				if(!attack.equals(null))
+					return attack;
 				boolean[][] endLocs = new boolean[r.map.length][r.map[0].length];
-				for(Integer[] c : opposite){
-					endLocs[c[0]][c[1]] = true;
+				for(int i = 0; i < opposite.size(); i++){
+					int[][] map = r.getVisibleRobotMap();
+					Integer[] c = opposite.get(i);
+					if(map[c[0]][c[1]]==0){
+						//r.log("REMOVAL==================================== : " + opposite.size());
+						opposite.remove(i);
+						dirMap = null;
+						i--;
+					}else
+						endLocs[c[0]][c[1]] = true;
 				}
 				if (dirMap == null) {
 					dirMap = Pathing.rangeBFS(r,endLocs,9,blockers);
+					Pathing.printMap(dirMap,r);
 				}
 				Integer[] move = Pathing.getNextMove(r,r.me.x,r.me.y,3,dirMap,blockers);
-				r.log("Move to: " + move);
+				//r.log("Move to: " + move);
 				if(move[0] == 0 && move[1] == 0) {
 					return null;
 				}

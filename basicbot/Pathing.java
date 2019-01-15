@@ -3,7 +3,10 @@ import java.util.LinkedList;
 import java.lang.System;
 
 public class Pathing{
-
+	//returns distance in r^2 terms
+	public static int distance(int x1, int y1, int x2, int y2){
+		return (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2);
+	}
 	//given coordinates and a r^2 range, return a map of accessible locations
 	public static LinkedList<Integer[]> findRange(MyRobot r, int x, int y, int range, boolean[][] blockers){
 		int steps = (int)Math.floor(Math.sqrt(range));

@@ -17,8 +17,8 @@ public class CastleBot extends Bot{
 	}
 	public void addSignals(){
 		for (Integer[] c : opposite){
-			r.log("X: " + c[1]);
-			r.log("Y: " + c[0]);
+			//r.log("X: " + c[1]);
+			//r.log("Y: " + c[0]);
 			if((c.length == 3 && c[0] >= 0 && c[1] >= 0) || numCastles == 1){
 				
 				Integer signal = 10000 * numCastles;
@@ -28,8 +28,8 @@ public class CastleBot extends Bot{
 			}
 		}
 
-		r.log("signalQueue size:"+signalQueue.size());
-		r.log("opposite size:"+opposite.size());
+		//r.log("signalQueue size:"+signalQueue.size());
+		//r.log("opposite size:"+opposite.size());
 	}
 	public BuildAction spawnUnit(int unitId){
 		//spawn a crusader at optimal location
@@ -44,7 +44,7 @@ public class CastleBot extends Bot{
 		Integer[] move = Pathing.checkAdj(r, me.x, me.y, pathMap, blockers);
 
 		Pathing.printMap(pathMap,r);
-		r.log("building: " + move[1] + ", " + move[0]);
+		//r.log("building: " + move[1] + ", " + move[0]);
 		signalsNeeded++;
 		if(fullyInit() && opposite.size() == numCastles){
 			addSignals();
@@ -52,7 +52,7 @@ public class CastleBot extends Bot{
 		}
 		if(currSignal == 0 && signalQueue.size()>0 && opposite.size() == numCastles){
 			currSignal = signalQueue.poll();
-			r.log("currSignal " + currSignal);
+			//r.log("currSignal " + currSignal);
 			r.signal(currSignal,2);
 		}
 		return r.buildUnit(unitId,move[1],move[0]);
