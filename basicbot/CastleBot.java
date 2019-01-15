@@ -40,17 +40,18 @@ public class CastleBot extends Bot{
 		}
 
 		int range = (unitId == 3) ? 9 : 4;
-		int[][] pathMap = Pathing.rangeBFS(r,endLocs,9,blockers);
+		boolean[][] b = new boolean[r.map.length][r.map[0].length];
+		int[][] pathMap = Pathing.rangeBFS(r,endLocs,range,blockers);
 		Integer[] move = Pathing.checkAdj(r, me.x, me.y, pathMap, blockers);
 
-		Pathing.printMap(pathMap,r);
+		//Pathing.printMap(pathMap,r);
 		//r.log("building: " + move[1] + ", " + move[0]);
 		signalsNeeded++;
-		if(fullyInit() && opposite.size() == numCastles){
+		if(fullyInit && opposite.size() == numCastles){
 			addSignals();
 			signalsNeeded--;
 		}
-		if(currSignal == 0 && signalQueue.size()>0 && opposite.size() == numCastles){
+		if(currSignal == 0 && signalQueue.size()>0){
 			currSignal = signalQueue.poll();
 			//r.log("currSignal " + currSignal);
 			r.signal(currSignal,2);
@@ -79,7 +80,7 @@ public class CastleBot extends Bot{
 						numCastles = 3;
 					Integer[] coor = new Integer[3];
 					coor[0] = -1;
-					coor[1] = other.castle_talk % 100;
+					coor[1] = other.castle_talk % 100 - 1;
 					coor[2] = other.id;
 					opposite.add(coor);
 				}
@@ -90,9 +91,9 @@ public class CastleBot extends Bot{
 
 			//broadcast enemy castle x coordinate
 			if(numCastles == 2)
-				r.castleTalk(opposite.get(0)[1]);
+				r.castleTalk(opposite.get(0)[1]+1);
 			if(numCastles == 3)
-				r.castleTalk(opposite.get(0)[1] + 100);
+				r.castleTalk(opposite.get(0)[1] + 100+1);
 		}
 		else if(me.turn <= 3){
 
@@ -111,7 +112,7 @@ public class CastleBot extends Bot{
 					if(!found){
 						Integer[] coor = new Integer[3];
 						coor[0] = -1;
-						coor[1] = other.castle_talk % 100;
+						coor[1] = other.castle_talk % 100 - 1;
 						coor[2] = other.id;
 						opposite.add(coor);
 					}
@@ -119,7 +120,7 @@ public class CastleBot extends Bot{
 			}
 			//broadcast enemy castle y coordinate
 			if(me.turn == 2)
-				r.castleTalk(opposite.get(0)[0]);
+				r.castleTalk(opposite.get(0)[0]+1);
 			
 			
 		}
@@ -134,8 +135,8 @@ public class CastleBot extends Bot{
 			currSignal = signalQueue.poll();
 			r.signal(currSignal,2);
 		}
-		if(r.karbonite >= 20)
-			return spawnUnit(3);
+		if(r.karbonite >= 30)
+			return spawnUnit(5);
 		return null;
 	}
 

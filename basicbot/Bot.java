@@ -28,7 +28,7 @@ public class Bot{
 		for(Robot other : r.getVisibleRobots()){
 			if(r.isVisible(other) && other.team != me.team){
 				int dist = Pathing.distance(other.x,other.y,me.x,me.y);
-				int range = (me.id == 4) ? 64 : 16;
+				int range = (me.unit == 4) ? 64 : 16;
 				if(dist <= range){
 					target = other;
 				}

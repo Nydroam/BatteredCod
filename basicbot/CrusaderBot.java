@@ -53,15 +53,17 @@ public class CrusaderBot extends Bot{
 				}
 				fullyInit = fullyInit();
 			}
-			
+			AttackAction attack = attack();
+			if(!attack.equals(null))
+				return attack;
 			if(fullyInit){
-				AttackAction attack = attack();
-				if(!attack.equals(null))
-					return attack;
+				
 				boolean[][] endLocs = new boolean[r.map.length][r.map[0].length];
 				for(int i = 0; i < opposite.size(); i++){
+
 					int[][] map = r.getVisibleRobotMap();
 					Integer[] c = opposite.get(i);
+					r.log("Enemy: " + c[1] + ", " + c[0]);
 					if(map[c[0]][c[1]]==0){
 						//r.log("REMOVAL==================================== : " + opposite.size());
 						opposite.remove(i);

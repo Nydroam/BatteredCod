@@ -8,24 +8,38 @@ public class Pathing{
 		return (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2);
 	}
 	//given coordinates and a r^2 range, return a map of accessible locations
-	public static LinkedList<Integer[]> findRange(MyRobot r, int x, int y, int range, boolean[][] blockers){
+	public static LinkedList<Integer[]> findRange(MyRobot r, int x, int y, int range, boolean[][] blockers, int[][] dirMap){
 		int steps = (int)Math.floor(Math.sqrt(range));
-		return createPerm(r,x,y,steps,blockers);	
+		return createPerm(r,x,y,steps,blockers, dirMap);	
 	}
 
 	//Returns a list of coordinates that are a certain number steps away from a starting coordinate
-	public static LinkedList<Integer[]> createPerm(MyRobot r, int startX, int startY, int steps, boolean[][] blockers){
+	public static LinkedList<Integer[]> createPerm(MyRobot r, int startX, int startY, int steps, boolean[][] blockers, int [][] dirMap){
 		LinkedList<Integer[]> results = new LinkedList<Integer[]>();
 		for(int y = 0 - steps; y <= steps; y++){
 			int offset = (y < 0)?y+steps:steps-y;
+			boolean minX = false;
+			boolean maxX = false;
 			for(int x = 0 - offset; x <= offset; x++) {
 				int xCor = x + startX;
 				int yCor = y + startY;
+				if(checkBounds(r,xCor,yCor,blockers) && dirMap [yCor][xCor] == 9999){
 
-				if(checkBounds(r,xCor,yCor,blockers)){
-					Integer[] coor = new Integer[2];
+					Integer[] coor = new Integer[3];
 					coor[0] = yCor;
 					coor[1] = xCor;
+					if(!minX){
+						minX = true;
+						coor[2] = 1;
+					}else if (!maxX){
+						maxX = true;
+						coor[2] = 1;
+					}else{
+						results.get(results.size()-1)[2]=0;
+						coor[2] = 1;
+					}
+					if(x == 0 - offset || x == offset || y == 0-steps || y == steps)
+						coor[2] = 1;
 					results.add(coor);
 				}
 			}
@@ -70,7 +84,7 @@ public class Pathing{
 			int currY = curr[0];
 			int currX = curr[1];
 
-			LinkedList<Integer[]> nextList = findRange(r,currX,currY,range,blockers);
+			LinkedList<Integer[]> nextList = findRange(r,currX,currY,range,blockers,dirMap);
 			int step = dirMap[currY][currX];
 			while(!nextList.isEmpty()){
 				Integer[] coor = nextList.poll();
@@ -78,7 +92,8 @@ public class Pathing{
 				int coorX = coor[1];
 				
 				if(dirMap[coorY][coorX] > step + 1){
-					nodes.add(coor);
+					if(coor[2]==1 && coorY > 0 && coorY < r.map.length - 1)
+						nodes.add(coor);
 					dirMap[coorY][coorX] = step + 1;
 				}
 			}
@@ -86,6 +101,7 @@ public class Pathing{
 		}
 		long diff = System.currentTimeMillis() - startTime;
 		r.log("BFS Time: " + diff + " ms");
+		//printMap(dirMap,r);
 		return dirMap;
 	}
 
