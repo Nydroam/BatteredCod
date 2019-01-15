@@ -99,7 +99,7 @@ public class CastleBot extends Bot{
 
 			for(Robot other : visible){
 				if(other.castle_talk != 0 && other.id != r.id){
-					Integer c = other.castle_talk % 100;
+					Integer c = other.castle_talk % 100 - 1;
 					boolean found = false;
 					for(Integer[] l : opposite){
 						if(l.length == 3 && l[2].equals(other.id)){
@@ -128,8 +128,10 @@ public class CastleBot extends Bot{
 			fullyInit = fullyInit();
 		}
 		if(fullyInit){
-			addSignals();
-			signalsNeeded--;
+			while(signalsNeeded > 0){
+				addSignals();
+				signalsNeeded--;
+			}
 		}
 		if(signalQueue.size()>0){
 			currSignal = signalQueue.poll();

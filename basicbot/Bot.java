@@ -31,6 +31,9 @@ public class Bot{
 				int range = (me.unit == 4) ? 64 : 16;
 				if(dist <= range){
 					target = other;
+
+					if(me.unit == 4 && dist < 16)
+						target = null;
 				}
 			}
 		}

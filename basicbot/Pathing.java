@@ -1,5 +1,6 @@
 package bc19;
 import java.util.LinkedList;
+import java.util.ArrayList;
 import java.lang.System;
 
 public class Pathing{
@@ -16,6 +17,11 @@ public class Pathing{
 	//Returns a list of coordinates that are a certain number steps away from a starting coordinate
 	public static LinkedList<Integer[]> createPerm(MyRobot r, int startX, int startY, int steps, boolean[][] blockers, int [][] dirMap){
 		LinkedList<Integer[]> results = new LinkedList<Integer[]>();
+		boolean[] yMin = new boolean[steps*2+1];
+		boolean[] yMax = new boolean[steps*2+1];
+		ArrayList<Integer[]> prevCoor = new ArrayList<Integer[]>();
+		for(int i = 0; i < steps*2+1; i++)
+			prevCoor.add(null);
 		for(int y = 0 - steps; y <= steps; y++){
 			int offset = (y < 0)?y+steps:steps-y;
 			boolean minX = false;
@@ -38,8 +44,18 @@ public class Pathing{
 						results.get(results.size()-1)[2]=0;
 						coor[2] = 1;
 					}
-					if(x == 0 - offset || x == offset || y == 0-steps || y == steps)
+					if(!yMin[y+steps]){
+						yMin[y+steps] = true;
 						coor[2] = 1;
+					}else if (!yMax[y+steps]){
+						yMax[y+steps] = true;
+						prevCoor.set(y+steps,coor);
+						coor[2] = 1;
+					}else{
+						prevCoor.get(y+steps)[2] = 0;
+						prevCoor.set(y+steps,coor);
+						coor[2] = 1;
+					}
 					results.add(coor);
 				}
 			}
@@ -101,7 +117,7 @@ public class Pathing{
 		}
 		long diff = System.currentTimeMillis() - startTime;
 		r.log("BFS Time: " + diff + " ms");
-		//printMap(dirMap,r);
+		printMap(dirMap,r);
 		return dirMap;
 	}
 
