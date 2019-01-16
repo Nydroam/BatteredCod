@@ -117,7 +117,7 @@ public class Pathing{
 		}
 		long diff = System.currentTimeMillis() - startTime;
 		r.log("BFS Time: " + diff + " ms");
-		printMap(dirMap,r);
+		//printMap(dirMap,r);
 		return dirMap;
 	}
 

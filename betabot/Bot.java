@@ -1,9 +1,19 @@
 package bc19;
+import java.util.LinkedList;
 public class Bot{
 	
 	MyRobot r;
 	Robot me;
 	boolean[][] blockers;
+
+	//when the bot has all the information it needs to function
+	boolean fullyInit;
+	int numCastles;
+
+	LinkedList<Integer[]> enemyCastles;
+	LinkedList<Integer[]> myCastles;
+
+	int symmetry;
 
 	public Bot(MyRobot r){
 		update(r);
