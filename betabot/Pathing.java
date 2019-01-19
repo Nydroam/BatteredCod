@@ -168,8 +168,9 @@ public class Pathing{
 		return dirMap;
 	}
 
-	public static int[][] rangeAST(MyRobot r, int startX, int startY, int endX, int endY, int range, boolean[][] blockers) {
+	public static LinkedList<Integer[]> rangeAST(MyRobot r, int startX, int startY, int endX, int endY, int range, boolean[][] blockers) {
 		long startTime = System.currentTimeMillis();
+		LinkedList<Integer[]> path;
 		int[][] dirMap = new int[r.map.length][r.map[0].length];
 		for(int i = 0; i < dirMap.length; i++)
 				for(int j = 0; j < dirMap[i].length; j++)
@@ -188,7 +189,7 @@ public class Pathing{
 			nodes.remove(curr);
 			int currY = curr[0];
 			int currX = curr[1];
-			r.log("X: " + currX + " Y: " + currY);
+
 			LinkedList<Integer[]> nextList = findRange(r,currX,currY,range,blockers,dirMap);
 			int step = dirMap[currY][currX];
 			while(!nextList.isEmpty()) {
@@ -198,23 +199,23 @@ public class Pathing{
 
 				if (coorX == endX && coorY == endY) {
 					dirMap[coorY][coorX] = 98;
+					printMap(dirMap,r);
+					path = createPath(r,startX,startY,endX,endY,range,dirMap,blockers);
 					long diff = System.currentTimeMillis() - startTime;
 					r.log("AST Time: " + diff + " ms");
-					printMap(dirMap,r);
-					return dirMap;
+					return path;
 				}
 				
 				if(dirMap[coorY][coorX] > step + 1){
 						if(coor[2]==1) {
-							r.log("Adding-- X: " + coorX + " Y: " + coorY);
 							nodes.add(coor);
 						}
 						dirMap[coorY][coorX] = step + 1;
 				}
 			}
 		}
-
-		return dirMap;
+		path = createPath(r,startX,startY,endX,endY,range,dirMap,blockers);
+		return path;
 	}
 
 	public static Integer[] findNext(LinkedList<Integer[]> nodes, int endX, int endY, int[][] dirMap) {
@@ -237,17 +238,68 @@ public class Pathing{
 		}
 		return nextNode;
 	}
-}
 
-/*int currStep = dirMap[node[1]][node[0]];
-			if (currStep > maxStep) {
-				maxStep = currStep;
-				minDist = distance(node[1],node[0],endX,endY);
-				nextNode = node;
-			} else if (currStep == maxStep) {
-				int newDist = distance(node[1],node[0],endX,endY);
-				if (newDist < minDist) {
-					minDist = newDist;
-					nextNode = node;
+	public static LinkedList<Integer[]> createPath(MyRobot r, int startX, int startY, int endX, int endY, int range, int[][] dirMap, boolean[][] blockers) {
+		LinkedList<Integer[]> path = new LinkedList<Integer[]>();
+		LinkedList<Integer[]> nodes = new LinkedList<Integer[]>();
+
+		Integer[] end = new Integer[2];
+		end[1] = endX;
+		end[0] = endY;
+		nodes.add(end);
+
+		while(!nodes.isEmpty()) {
+			Integer[] node = nodes.poll();
+			r.log("X : " + node[1] + " Y: " + node[0]);
+			Integer[] nextStep = checkAdj(r,node[1],node[0],startX,startY,range,dirMap,blockers);
+			path.add(0,nextStep);
+
+			//create the next node and assign it's coordinates
+			Integer[] nextNode = new Integer[2];
+			r.log("Next X : " + nextStep[1] + " Y: " + nextStep[0]);
+			nextNode[1] = node[1] + nextStep[1];
+			nextNode[0] = node[0] + nextStep[0];
+
+			if (nextNode[1] == startX && nextNode[0] == startY) {
+				return path;
+			}
+
+			nodes.add(nextNode);
+		}
+		return path;
+	}
+
+	public static Integer[] checkAdj(MyRobot r, int startX, int startY, int endX, int endY, int range, int[][] dirMap, boolean[][] blockers){
+		int steps = (int)Math.floor(Math.sqrt(range));
+		int min = 9999;
+		int minDist = 9999;
+		Integer[] move = new Integer[2];
+
+		for(int y = 0 - steps; y <= steps; y++){
+			for(int x = 0 - steps; x <= steps; x++){
+				if (x == 0 && y == 0) {
+					continue;
 				}
-			}*/
+				int dist = distance(0,0,x,y);
+				int xCor = startX+x;
+				int yCor = startY+y;
+				if(dist <= range && checkBounds(r, xCor, yCor, blockers)){
+					if (dirMap[yCor][xCor] < min){
+						min = dirMap[yCor][xCor];
+						minDist = distance(xCor,yCor,endX,endY);
+						move[1] = x;
+						move[0] = y;
+					} else if (dirMap[yCor][xCor] == min) {
+						int newDist = distance(xCor,yCor,endX,endY);
+						if (newDist < minDist) {
+							minDist = newDist;
+							move[1] = x;
+							move[0] = y;
+						}
+					}
+				}
+			}
+		}
+		return move;
+	}
+}
