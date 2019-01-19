@@ -53,6 +53,8 @@ public class Pathing{
 
 		//check the square with side length steps for coordinates within the range
 		for(int y = 0 - steps; y <= steps; y++){
+			boolean minX = false;
+			boolean maxX = false;
 			for(int x = 0 - steps; x <= steps; x++){
 
 				if (x == 0 && y == 0) {
@@ -62,8 +64,7 @@ public class Pathing{
 				int dist = distance(0,0,x,y);
 
 				//booleans to check whether not a min/max for this row has been found
-				boolean minX = false;
-				boolean maxX = false;
+
 				if(dist <= range && checkBounds(r, x + startX, y + startY, blockers) && dirMap[y + startY][x + startX] == 99){
 					Integer[] coor = new Integer[3];
 					coor[0] = y + startY;
