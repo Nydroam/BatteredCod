@@ -132,7 +132,7 @@ public class CastleBot extends Bot{
 			
 		}
 
-		if(r.karbonite >= 10){
+		if(r.karbonite >= 10 && aKarbList.size() <3){
 			BuildAction a = spawnWorker(true);
 			if(!a.equals(null)){
 				r.log("SPAWNED");

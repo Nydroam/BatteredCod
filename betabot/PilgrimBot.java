@@ -22,7 +22,13 @@ public class PilgrimBot extends Bot{
 	public Integer[] nextMove(int[][] map){
 		int min = 9999;
 		Integer[] curr;
-		LinkedList<Integer[]> moves = Pathing.findRange(r,me.x,me.y,4,blockers,map);
+		int[][] nullMap = new int[r.map.length][r.map[0].length];
+		for(int y = 0; y < nullMap.length; y++){
+			for(int x = 0; x < nullMap.length; x++){
+				nullMap [y][x] = 99;
+			}
+		}
+		LinkedList<Integer[]> moves = Pathing.findRange(r,me.x,me.y,4,blockers,nullMap);
 		for(Integer[] x: moves){
 			if(map[x[0]][x[1]] < min){
 				min = map[x[0]][x[1]];
@@ -66,12 +72,12 @@ public class PilgrimBot extends Bot{
 			running = true;
 		}
 		}
-		if (me.x == home[1] && me.y == home[0] && (me.karbonite != 0 || me.fuel != 0)){
+		if (me.x == home[1] && me.y == home[0] && (me.karbonite != 0 || me.fuel != 0) && running){
 			running = false;
 			return r.give(castle[1]-me.x,castle[0]-me.y,me.karbonite,me.fuel);
 			
 		}
-		else if (me.x == toGo[1] && me.y == toGo[0]){
+		else if (me.x == toGo[1] && me.y == toGo[0] && !running){
 			return r.mine();
 		}
 		if(running){
