@@ -15,7 +15,7 @@ public class PilgrimBot extends Bot{
 	public void extractSignal(int signal){
 		int sig = signal % 10000;
 		int ycor = sig % 100;
-		int xcor = (sig - ycor)/100;
+		int xcor = (int)Math.floor((sig - ycor)/100);
 		toGo[1] = xcor;
 		toGo[0] = ycor;
 	}

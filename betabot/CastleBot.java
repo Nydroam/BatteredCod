@@ -8,6 +8,8 @@ public class CastleBot extends Bot{
 	LinkedList<Resource> aKarbList;
 	LinkedList<Resource> fuelList;
 	LinkedList<Resource> aFuelList;
+	int[][] resMap;
+	Resource allocate;
 
 	public CastleBot(MyRobot r){
 		super(r);
@@ -64,18 +66,14 @@ public class CastleBot extends Bot{
 			boolean[][] b = new boolean[r.map.length][r.map[0].length];
 			boolean[][] endLocs = new boolean[r.map.length][r.map[0].length];
 			endLocs[me.y][me.x] = true;
-			//Pathing.rangeBFS(r,endLocs,4,b,t);
+			resMap = Pathing.rangeBFS(r,endLocs,4,b,t);
+
+			karbList = t.karbList;
+			fuelList = t.fuelList;
+			r.log("karb list size: " + karbList.size());
+			aKarbList = new LinkedList<Resource>();
+			aFuelList = new LinkedList<Resource>();
 			r.log("Symmetry: " + symmetry);
-			if (symmetry == 0) {
-				Pathing.rangeAST(r,me.x,me.y,r.map[0].length-me.x,me.y,4,b);
-			} else if (symmetry == 1) {
-				Pathing.rangeAST(r,me.x,me.y,me.x,r.map.length-me.y,4,b);
-			}
-			
-
-
-
-
 		}
 		else if( me.turn <= 3){ //TURN 2-3 =================================================================================================
 			for(Robot other : visible){
@@ -104,13 +102,45 @@ public class CastleBot extends Bot{
 				r.castleTalk(me.y + 1);
 		}
 
+		if(!allocate.equals(null)){//match a workerid with a resource
+			LinkedList<Resource> resList;
+			if(allocate.isKarb)
+				resList = aKarbList;
+			else
+				resList = aFuelList;
+			for(Robot other:visible){
+				if(other.unit == 2 && other.team == me.team){
+					boolean dup = false;
+					for(Resource res: resList)
+						if(other.id == res.worker){
+							dup = true;
+						}
+					if(!dup){
+						allocate.worker = other.id;
+						break;
+					}
+				}
+			}
+
+		}
+
 		if(!fullyInit){
 			fullyInit = fullyInitialize();
 		}
 
 		if(fullyInit){//FULLY INITIALIZED, START DOING STUFF ====================================================================================
-			for(Integer[] c : myCastles){
-				r.log("Castle At: " + c[1] + ", " + c[0]);
+			
+		}
+
+		if(r.karbonite >= 10){
+			BuildAction a = spawnWorker(true);
+			if(!a.equals(null)){
+				r.log("SPAWNED");
+				int s = 0;
+				s += allocate.x*100;
+				s += allocate.y;
+				r.signal(s,2);
+				return a;
 			}
 		}
 
@@ -126,5 +156,55 @@ public class CastleBot extends Bot{
 		if(myCastles.size()<numCastles)
 			return false;
 		return true;
+	}
+
+	public BuildAction spawnWorker(boolean karb){
+		LinkedList<Resource> resList;
+		if(karb)
+			resList = aKarbList;
+		else
+			resList = aFuelList;
+		boolean found = false;
+		for(Resource res: resList){
+			if(res.worker == -1){
+				allocate = res;
+				allocate.isKarb = karb;
+				found = true;
+				break;
+			}
+		}
+		if(!found){
+			LinkedList<Resource> oldList;
+			if(karb)
+				oldList = karbList;
+			else
+				oldList = fuelList;
+			if(oldList.size()>0){
+				allocate = oldList.poll();
+				allocate.isKarb = karb;
+				resList.add(allocate);
+			} else
+				return null;
+		}
+		int[][] nullMap = new int[r.map.length][r.map[0].length];
+		for(int y = 0; y < nullMap.length; y++){
+			for(int x = 0; x < nullMap.length; x++){
+				nullMap [y][x] = 99;
+			}
+		}
+		LinkedList<Integer[]> coords = Pathing.findRange(r,me.x,me.y,2,blockers,nullMap);
+		r.log("MADE IT HERE " + coords.size());
+		if(coords.size()>0){
+			Integer[] coor = coords.poll();
+			int min = resMap[coor[0]][coor[1]];
+			for(Integer[] c : coords){
+				if(resMap[c[0]][c[1]]<min){
+					coor = c;
+					min = resMap[c[0]][c[1]];
+				}
+			}
+			return r.buildUnit(2,coor[1] - me.x, coor[0] - me.y);
+		}
+		return null;
 	}
 }
