@@ -64,8 +64,14 @@ public class CastleBot extends Bot{
 			boolean[][] b = new boolean[r.map.length][r.map[0].length];
 			boolean[][] endLocs = new boolean[r.map.length][r.map[0].length];
 			endLocs[me.y][me.x] = true;
-			Pathing.rangeBFS(r,endLocs,4,b,t);
-
+			//Pathing.rangeBFS(r,endLocs,4,b,t);
+			r.log("Symmetry: " + symmetry);
+			if (symmetry == 0) {
+				Pathing.rangeAST(r,me.x,me.y,r.map[0].length-me.x,me.y,4,b);
+			} else if (symmetry == 1) {
+				Pathing.rangeAST(r,me.x,me.y,me.x,r.map.length-me.y,4,b);
+			}
+			
 
 
 

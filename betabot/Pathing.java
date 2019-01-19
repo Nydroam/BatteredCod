@@ -14,7 +14,7 @@ public class Pathing{
 		for(int y = 0; y < map.length; y++){
 			String line = "";
 			for(int x = 0; x < map[y].length; x++){
-				if(map[y][x] == 9999)
+				if(map[y][x] == 99)
 					line += "  |";
 				else{
 					int i = map[y][x];
@@ -54,12 +54,17 @@ public class Pathing{
 		//check the square with side length steps for coordinates within the range
 		for(int y = 0 - steps; y <= steps; y++){
 			for(int x = 0 - steps; x <= steps; x++){
+
+				if (x == 0 && y == 0) {
+					continue;
+				}
+
 				int dist = distance(0,0,x,y);
 
 				//booleans to check whether not a min/max for this row has been found
 				boolean minX = false;
 				boolean maxX = false;
-				if(dist <= range && checkBounds(r, x + startX, y + startY, blockers) && dirMap[y + startY][x + startX] == 9999){
+				if(dist <= range && checkBounds(r, x + startX, y + startY, blockers) && dirMap[y + startY][x + startX] == 99){
 					Integer[] coor = new Integer[3];
 					coor[0] = y + startY;
 					coor[1] = x + startX;
@@ -111,7 +116,7 @@ public class Pathing{
 
 		for(int i = 0; i < dirMap.length; i++)
 			for(int j = 0; j < dirMap[i].length; j++)
-				dirMap[i][j] = 9999;
+				dirMap[i][j] = 99;
 
 		for( int y = 0; y < endLocs.length; y++ ){
 			for( int x = 0; x < endLocs.length; x++ ){
@@ -161,4 +166,87 @@ public class Pathing{
 		printMap(dirMap,r);
 		return dirMap;
 	}
+
+	public static int[][] rangeAST(MyRobot r, int startX, int startY, int endX, int endY, int range, boolean[][] blockers) {
+		long startTime = System.currentTimeMillis();
+		int[][] dirMap = new int[r.map.length][r.map[0].length];
+		for(int i = 0; i < dirMap.length; i++)
+				for(int j = 0; j < dirMap[i].length; j++)
+					dirMap[i][j] = 99;
+
+		LinkedList<Integer[]> nodes = new LinkedList<Integer[]>();
+
+		Integer[] start = new Integer[3];
+		start[0] = startY;
+		start[1] = startX;
+		nodes.add(start);
+		dirMap[startY][startX] = 0;
+
+		while(!nodes.isEmpty()) {
+			Integer[] curr = findNext(nodes, endX, endY, dirMap);
+			nodes.remove(curr);
+			int currY = curr[0];
+			int currX = curr[1];
+			r.log("X: " + currX + " Y: " + currY);
+			LinkedList<Integer[]> nextList = findRange(r,currX,currY,range,blockers,dirMap);
+			int step = dirMap[currY][currX];
+			while(!nextList.isEmpty()) {
+				Integer[] coor = nextList.poll();
+				int coorY = coor[0];
+				int coorX = coor[1];
+
+				if (coorX == endX && coorY == endY) {
+					dirMap[coorY][coorX] = 98;
+					long diff = System.currentTimeMillis() - startTime;
+					r.log("AST Time: " + diff + " ms");
+					printMap(dirMap,r);
+					return dirMap;
+				}
+				
+				if(dirMap[coorY][coorX] > step + 1){
+						if(coor[2]==1) {
+							r.log("Adding-- X: " + coorX + " Y: " + coorY);
+							nodes.add(coor);
+						}
+						dirMap[coorY][coorX] = step + 1;
+				}
+			}
+		}
+
+		return dirMap;
+	}
+
+	public static Integer[] findNext(LinkedList<Integer[]> nodes, int endX, int endY, int[][] dirMap) {
+		Integer[] nextNode;
+		int minStep = 9999;
+		int minDist = 9999;
+		for (Integer[] node: nodes) {
+			int newDist = distance(node[1],node[0],endX,endY);
+			if (newDist < minDist) {
+				minStep = dirMap[node[1]][node[0]];
+				minDist = newDist;
+				nextNode = node;
+			} else if (newDist == minDist) {
+				int newStep = dirMap[node[1]][node[0]];
+				if (newStep < minStep) {
+					minStep = newStep;
+					nextNode = node;
+				}
+			}
+		}
+		return nextNode;
+	}
 }
+
+/*int currStep = dirMap[node[1]][node[0]];
+			if (currStep > maxStep) {
+				maxStep = currStep;
+				minDist = distance(node[1],node[0],endX,endY);
+				nextNode = node;
+			} else if (currStep == maxStep) {
+				int newDist = distance(node[1],node[0],endX,endY);
+				if (newDist < minDist) {
+					minDist = newDist;
+					nextNode = node;
+				}
+			}*/
