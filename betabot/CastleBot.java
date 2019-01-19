@@ -192,17 +192,11 @@ public class CastleBot extends Bot{
 				nullMap [y][x] = 99;
 			}
 		}
-		LinkedList<Integer[]> coords = Pathing.findRange(r,me.x,me.y,2,blockers,nullMap);
-		r.log("MADE IT HERE " + coords.size());
+		LinkedList<Integer[]> coords = Pathing.rangeAST(r,me.x,me.y,allocate.x,allocate.y,2,blockers);
+		
 		if(coords.size()>0){
 			Integer[] coor = coords.poll();
-			int min = resMap[coor[0]][coor[1]];
-			for(Integer[] c : coords){
-				if(resMap[c[0]][c[1]]<min){
-					coor = c;
-					min = resMap[c[0]][c[1]];
-				}
-			}
+			
 			return r.buildUnit(2,coor[1] - me.x, coor[0] - me.y);
 		}
 		return null;
