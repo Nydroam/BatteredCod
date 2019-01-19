@@ -1,10 +1,87 @@
 package bc19;
+import java.util.LinkedList;
 public class PilgrimBot extends Bot{
+	Integer[] home;
+	Integer[] toGo;
+	boolean running;
+	boolean[][] endLocs;
+	Integer[] castle;
+	int[][] Rmap;
+	int[][] Cmap;
 	public PilgrimBot(MyRobot r){
 		super(r);
+		running = false;
+	}
+	public void extractSignal(int signal){
+		int sig = signal % 10000;
+		int ycor = sig % 100;
+		int xcor = (sig - ycor)/100;
+		toGo[1] = xcor;
+		toGo[0] = ycor;
+	}
+	public Integer[] nextMove(int[][] map){
+		int min = 9999;
+		Integer[] curr;
+		LinkedList<Integer[]> moves = Pathing.findRange(r,me.x,me.y,4,blockers,map);
+		for(Integer[] x: moves){
+			if(map[x[0]][x[1]] < min){
+				min = map[x[0]][x[1]];
+				curr = x;
+			}
+		}
+		return curr;
 	}
 	public Action act(){
-		return null;
+		Robot [] visible = r.getVisibleRobots();
+		if(me.turn == 1){
+			home = new Integer[2];
+			toGo = new Integer[2];
+			castle = new Integer[2];
+			home[1] = me.x;
+			home[0] = me.y;
+			for(Robot c : visible){
+				if (c.unit == 0 && r.isRadioing(c)){
+					int sig = c.signal;
+					castle[1] = c.x;
+					castle[0] = c.y;
+					extractSignal(sig);
+					break;
+				}
+			}
+			endLocs = new boolean[r.map.length][r.map[0].length];
+			endLocs[toGo[0]][toGo[1]] = true;
+			Rmap = Pathing.rangeBFS(r,endLocs,4,blockers,new Task());
+			endLocs = new boolean[r.map.length][r.map[0].length];
+			endLocs[home[0]][home[1]] = true;
+			Cmap = Pathing.rangeBFS(r,endLocs,4,blockers,new Task());
+		}
+		if (!running){
+		for(Robot c: visible){
+			if (c.team != me.team && c.unit != 2){
+				running = true;
+				break;
+			}
+		}
+		if(me.fuel == 100 || me.karbonite == 20){
+			running = true;
+		}
+		}
+		if (me.x == home[1] && me.y == home[0] && (me.karbonite != 0 || me.fuel != 0)){
+			running = false;
+			return r.give(castle[1]-me.x,castle[0]-me.y,me.karbonite,me.fuel);
+			
+		}
+		else if (me.x == toGo[1] && me.y == toGo[0]){
+			return r.mine();
+		}
+		if(running){
+			Integer[] move = nextMove(Cmap);
+			return r.move(move[1] - me.x, move[0] -me.y);
+		}
+		else{
+			Integer[] move = nextMove(Rmap);
+			return r.move(move[1] - me.x, move[0] -me.y);
+		}
 	}
 
 }
