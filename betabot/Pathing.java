@@ -255,8 +255,6 @@ public class Pathing{
 		end[0] = endY;
 		nodes.add(end);
 
-		r.log("End X : " + endX + " Y: " + endY);
-
 		while(!nodes.isEmpty()) {
 			Integer[] node = nodes.poll();
 			//r.log("X : " + node[1] + " Y: " + node[0]);
@@ -338,7 +336,6 @@ public class Pathing{
 						newDist+=distance(xCor,yCor,enemyCoord[1],enemyCoord[0]);
 						//r.log("En X: " + enemyCoord[1] + " Y: " + enemyCoord[0]);
 					}
-					r.log("Coord: " + xCor + "," + yCor + "," + newDist);
 					if (newDist > maxDist) {
 						maxDist = newDist;
 						move[1] = x;
@@ -350,9 +347,6 @@ public class Pathing{
 		if (move[0] == 99) {
 			return null;
 		}
-		r.log("Me X: " + myX + " Y: " + myY);
-		r.log("maxDist : " + maxDist);
-		r.log("Run X: " + move[1] + " Y: " + move[0]);
 		return move;
 	}
 }
