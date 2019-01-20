@@ -23,7 +23,7 @@ public class Bot{
 		this.me = r.me;
 		blockers = new boolean[newr.map.length][newr.map[0].length];
 		for(Robot other : r.getVisibleRobots()){
-			if(r.isVisible(other)){
+			if(r.isVisible(other) && other.id != me.id){
 				blockers[other.y][other.x] = true;
 			}
 		}
