@@ -63,18 +63,27 @@ public class ProphetBot extends Bot{
 		}
 		boolean enemySeen = false;
 		boolean minRange = false;
+		LinkedList<Integer[]> enemies = new LinkedList<Integer[]>();
 		for(Robot other : visible){
 			if(other.team != me.team){
 				enemySeen = true;
-				int dist = Pathing.distance(other.x,other.y,me.x,me.y) ;
-				if(dist < 16)
+				int dist = Pathing.distance(other.x,other.y,me.x,me.y);
+				Integer[] enemyCoord = new Integer[2];
+				enemyCoord[1] = other.x;
+				enemyCoord[0] = other.y;
+				enemies.add(enemyCoord);
+				r.log("Enemy At: " + other.x + "," + other.y);
+				if(dist <= 16) {
 					minRange = true;
+					r.log("Start Running");
+				}
 			}
 		}
-		if(minRange){
-
-			Integer[] move = nextMove(Cmap);
-			Action a = r.move(move[1] - me.x, move[0] -me.y);
+		if(minRange){ //retret in opposite direction of enemy units
+			//Integer[] move = nextMove(Cmap);
+			//Action a = r.move(move[1] - me.x, move[0] -me.y);
+			Integer[] move = Pathing.retreatMove(r,me.x,me.y,enemies,4,blockers);
+			Action a = r.move(move[1], move[0]);
 			if(!a.equals(null))
 				return a; 
 		}

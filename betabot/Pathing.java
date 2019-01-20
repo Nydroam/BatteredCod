@@ -316,4 +316,41 @@ public class Pathing{
 		}
 		return move;
 	}
+
+	public static Integer[] retreatMove(MyRobot r, int myX, int myY, LinkedList<Integer[]> enemies, int range, boolean[][] blockers) {
+		int steps = (int)Math.floor(Math.sqrt(range));
+		Integer[] move = new Integer[2];
+		move[0] = 99;
+		int maxDist = 0;
+		for(int y = 0 - steps; y <= steps; y++){
+			for(int x = 0 - steps; x <= steps; x++){
+				if (x == 0 && y == 0) {
+					continue;
+				}
+				int dist = distance(0,0,x,y);
+				int xCor = myX+x;
+				int yCor = myY+y;
+				if(dist <= range && checkBounds(r, xCor, yCor, blockers)){
+					int newDist = 0;
+					for(Integer[] enemyCoord: enemies){
+						newDist+=distance(xCor,yCor,enemyCoord[1],enemyCoord[0]);
+						//r.log("En X: " + enemyCoord[1] + " Y: " + enemyCoord[0]);
+					}
+					r.log("Coord: " + xCor + "," + yCor + "," + newDist);
+					if (newDist > maxDist) {
+						maxDist = newDist;
+						move[1] = x;
+						move[0] = y;
+					}
+				}
+			}
+		}
+		if (move[0] == 99) {
+			return null;
+		}
+		r.log("Me X: " + myX + " Y: " + myY);
+		r.log("maxDist : " + maxDist);
+		r.log("Run X: " + move[1] + " Y: " + move[0]);
+		return move;
+	}
 }
