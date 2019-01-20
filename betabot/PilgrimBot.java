@@ -2,14 +2,14 @@ package bc19;
 import java.util.LinkedList;
 public class PilgrimBot extends Bot{
 	Integer[] toGo;
-	boolean running;
+	boolean deposit;
 	boolean[][] endLocs;
 	Integer[] castle;
 	int[][] Rmap;
 	int[][] Cmap;
 	public PilgrimBot(MyRobot r){
 		super(r);
-		running = false;
+		deposit = false;
 	}
 	public void extractSignal(int signal){
 		int sig = signal % 10000;
@@ -62,26 +62,41 @@ public class PilgrimBot extends Bot{
 				r.log("X: " + step[1] + " Y " + step[0]);
 			}*/
 		}
-		if (!running){
-		for(Robot c: visible){
-			if (c.team != me.team && c.unit != 2){
-				running = true;
-				break;
+		if (!deposit){
+			LinkedList<Integer[]> enemies = new LinkedList<Integer[]>();
+			for(Robot other: visible){
+				if (other.team != me.team && other.unit != 2){
+					if (me.karbonite > 0 || me.fuel > 0) {
+						deposit = true;
+						break;
+					} else {
+						Integer[] enemyCoord = new Integer[2];
+						enemyCoord[1] = other.x;
+						enemyCoord[0] = other.y;
+						enemies.add(enemyCoord);
+					}
+				}
+			}
+			if(!enemies.isEmpty()) {
+				Integer[] move = Pathing.retreatMove(r,me.x,me.y,enemies,4,blockers);
+				Action a = r.move(move[1], move[0]);
+				if(!a.equals(null))
+				return a; 
+			}
+			if(me.fuel == 100 || me.karbonite == 20){
+				deposit = true;
 			}
 		}
-		if(me.fuel == 100 || me.karbonite == 20){
-			running = true;
-		}
-		}
-		if (Pathing.distance(me.x,me.y,castle[1],castle[0])<=2 && running){
-			running = false;
+
+		if (Pathing.distance(me.x,me.y,castle[1],castle[0])<=2 && deposit){
+			deposit = false;
 			return r.give(castle[1]-me.x,castle[0]-me.y,me.karbonite,me.fuel);
 			
 		}
-		else if (me.x == toGo[1] && me.y == toGo[0] && !running){
+		else if (me.x == toGo[1] && me.y == toGo[0] && !deposit){
 			return r.mine();
 		}
-		if(running){
+		if(deposit){
 			Integer[] move = nextMove(Cmap);
 			return r.move(move[1] - me.x, move[0] -me.y);
 		}
