@@ -5,6 +5,7 @@ public class ProphetBot extends Bot{
 	boolean running;
 	boolean[][] endLocs;
 	Integer[] castle;
+	Robot castleBot;
 	int[][] Rmap;
 	int[][] Cmap;
 	int strat;
@@ -46,6 +47,7 @@ public class ProphetBot extends Bot{
 	
 			for(Robot c : visible){
 				if (c.unit == 0 && r.isRadioing(c)){
+					castleBot = c;
 					int sig = c.signal;
 					castle[1] = c.x;
 					castle[0] = c.y;
