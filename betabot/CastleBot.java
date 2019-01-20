@@ -215,7 +215,7 @@ public class CastleBot extends Bot{
 			
 		}
 
-		if(r.karbonite >= 10 && r.fuel >= 50 && (me.turn == 1 || (fullyInit && (me.turn >20 || fuelList.get(0).priority < 5 || karbList.get(0).priority < 5)))) {
+		if(r.karbonite >= 10 && r.fuel >= 50 && (me.turn == 1 || (fullyInit && (me.turn >100 || fuelList.get(0).priority < 5 || karbList.get(0).priority < 5)))) {
 			if(me.turn > 1 && (r.karbonite > 90 || (fuelList.get(0).priority < 5 && aKarbList.size()>0)) && !fuelList.equals(null) && fuelList.size() > 0) {
 				r.log("FUELED+============");
 					BuildAction a = spawnWorker(false);

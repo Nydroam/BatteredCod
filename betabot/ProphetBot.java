@@ -7,6 +7,7 @@ public class ProphetBot extends Bot{
 	boolean[][] endLocs;
 	Integer[] castle;
 	Robot castleBot;
+	int castleId;
 	int[][] Rmap;
 	int strat;
 	boolean attack;
@@ -76,7 +77,7 @@ public class ProphetBot extends Bot{
 			castle = new Integer[2];	
 			for(Robot c : visible){
 				if (c.unit == 0 && c.team == me.team){
-					castleBot = c;
+					castleId = c.id;
 					castle[1] = c.x;
 					castle[0] = c.y;
 					int symmetry = Logistics.symmetry(r.map,r);
@@ -87,8 +88,7 @@ public class ProphetBot extends Bot{
 			}
 			calcMap();
 		}
-		r.log("Strat" + strat);
-		r.log("is radioing " + r.isRadioing(castleBot) + " - " +castleBot.id);
+		castleBot = r.getRobot(castleId);
 		if (castleBot.signal > -1 && strat != 2){
 			int sig = castleBot.signal;
 			r.log("Signal: " + sig);
