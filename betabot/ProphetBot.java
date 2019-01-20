@@ -89,7 +89,7 @@ public class ProphetBot extends Bot{
 			calcMap();
 		}
 		castleBot = r.getRobot(castleId);
-		if (castleBot.signal > -1 && strat != 2){
+		if (castleBot != null && r.isRadioing(castleBot) && strat != 2){
 			int sig = castleBot.signal;
 			r.log("Signal: " + sig);
 			extractSignal(sig);
