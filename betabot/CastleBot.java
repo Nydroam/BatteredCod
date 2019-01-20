@@ -206,7 +206,7 @@ public class CastleBot extends Bot{
 			return r.buildUnit(2,coor[1] - me.x, coor[0] - me.y);
 		}
 		return null;*/
-		Integer[] coord = Pathing.checkAdj(r,me.x,me.y,allocate.x,allocate.y,2,resMap,blockers);
+		Integer[] coord = Pathing.checkAdj(r,me.x,me.y,allocate.x,allocate.y,2,nullMap,blockers);
 		if (coord != null) {
 			return r.buildUnit(2,coord[1], coord[0]);
 		}

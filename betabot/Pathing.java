@@ -248,9 +248,11 @@ public class Pathing{
 		end[0] = endY;
 		nodes.add(end);
 
+		r.log("End X : " + endX + " Y: " + endY);
+
 		while(!nodes.isEmpty()) {
 			Integer[] node = nodes.poll();
-			r.log("X : " + node[1] + " Y: " + node[0]);
+			//r.log("X : " + node[1] + " Y: " + node[0]);
 			Integer[] nextStep = checkAdj(r,node[1],node[0],startX,startY,range,dirMap,blockers);
 			path.add(0,nextStep);
 
@@ -274,7 +276,7 @@ public class Pathing{
 		int min = 9999;
 		int minDist = 9999;
 		Integer[] move = new Integer[2];
-		move[0] = -1;
+		move[0] = 99;
 
 		for(int y = 0 - steps; y <= steps; y++){
 			for(int x = 0 - steps; x <= steps; x++){
@@ -301,7 +303,7 @@ public class Pathing{
 				}
 			}
 		}
-		if (move[0] == -1) {
+		if (move[0] == 99) {
 			return null;
 		}
 		return move;
