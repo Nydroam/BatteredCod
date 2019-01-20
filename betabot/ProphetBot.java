@@ -1,25 +1,54 @@
 package bc19;
 import java.util.LinkedList;
 public class ProphetBot extends Bot{
+	LinkedList<Integer[]> targets;
 	Integer[] toGo;
 	boolean running;
 	boolean[][] endLocs;
 	Integer[] castle;
 	Robot castleBot;
 	int[][] Rmap;
-	int[][] Cmap;
 	int strat;
+	boolean attack;
 	public ProphetBot(MyRobot r){
 		super(r);
+		targets = new LinkedList<Integer[]>();
+		attack = false;
+	}
+	public void calcMap(){
+		endLocs = new boolean[r.map.length][r.map[0].length];
+		for( Integer[] c : targets){
+			endLocs[c[0]][c[1]] = true;
+			}
+		Rmap = Pathing.rangeBFS(r,endLocs,4,blockers,new Task());
+		attack = true;
 	}
 	public void extractSignal(int signal){
 		strat = (int)Math.floor(signal/10000);
-		int sig = signal % 10000;
-		int ycor = sig % 100;
-		int xcor = (int)Math.floor((sig - ycor)/100);
-		toGo[1] = xcor;
-		toGo[0] = ycor;
-
+		if(strat == 0){
+			return;
+		}
+		else if (strat == 1 || strat == 2){
+			Integer[] targ = new Integer[2];
+			int sig = signal % 10000;
+			int ycor = sig % 100;
+			int xcor = (int)Math.floor((sig - ycor)/100);
+			targ[1] = xcor;
+			targ[0] = ycor;
+			boolean have = false;
+			for(int i = 0; i < targets.size(); i++){
+				if(targets.get(i)[1] == xcor && targets.get(i)[0] == ycor){
+					have = true;
+					break;
+				}
+			}
+			if(!have){
+				targets.add(targ);
+			}
+			if (strat == 2){
+				calcMap();
+			}
+		}
 	}
 	public Integer[] nextMove(int[][] map){
 		int min = 9999;
@@ -43,25 +72,39 @@ public class ProphetBot extends Bot{
 		Robot [] visible = r.getVisibleRobots();
 		if(me.turn == 1){
 			toGo = new Integer[2];
-			castle = new Integer[2];
-	
+			castle = new Integer[2];	
 			for(Robot c : visible){
-				if (c.unit == 0 && r.isRadioing(c)){
+				if (c.unit == 0 && c.team == me.team){
 					castleBot = c;
-					int sig = c.signal;
 					castle[1] = c.x;
 					castle[0] = c.y;
-					extractSignal(sig);
+					int symmetry = Logistics.symmetry(r.map,r);
+					targets.add(Logistics.findOpposite(r,castle[1],castle[0],symmetry));
 					break;
 				}
 			}
-			endLocs = new boolean[r.map.length][r.map[0].length];
-			endLocs[toGo[0]][toGo[1]] = true;
-			Rmap = Pathing.rangeBFS(r,endLocs,4,blockers,new Task());
-			endLocs = new boolean[r.map.length][r.map[0].length];
-			endLocs[castle[0]][castle[1]] = true;
-			Cmap = Pathing.rangeBFS(r,endLocs,4,blockers,new Task());
-			
+		}
+		if (r.isRadioing(castleBot)){
+			int sig = c.signal;
+			extractSignal(sig);
+		}
+		for(int i = 0; i < targets.size(); i++){
+			Integer[] c = targets.get(i);
+			int dist = Pathing.distance(c[1],c[0],me.x,me.y);
+			if (dist <= 8){
+				boolean found = false;
+				for(Robot g: visible){
+					if (g.unit == 0){
+						found = true;
+						break;
+					}
+				}
+				if (!found){
+					targets.remove(i);
+					calcMap();
+					i--;
+				}
+			}
 		}
 		boolean enemySeen = false;
 		boolean minRange = false;
@@ -101,7 +144,10 @@ public class ProphetBot extends Bot{
 			if(!a.equals(null))
 				return a; 
 		}
-
+		if(attack){
+			Integer[] move = nextMove(Rmap);
+			return r.move(move[1] - me.x, move[0] -me.y);
+		}
 		return null;
 	}
 }
