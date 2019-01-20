@@ -63,6 +63,18 @@ public class CastleBot extends Bot{
 
 			
 			r.log("Symmetry: " + symmetry);
+
+			Task t = new Task();
+			boolean[][] b = new boolean[r.map.length][r.map[0].length];
+			boolean[][] endLocs = new boolean[r.map.length][r.map[0].length];
+			for(Integer[] c : myCastles)
+				endLocs[c[0]][c[1]] = true;
+			resMap = Pathing.rangeBFS(r,endLocs,4,b,t);
+
+			karbList = t.karbList;
+			fuelList = t.fuelList;
+			aKarbList = new LinkedList<Resource>();
+			aFuelList = new LinkedList<Resource>();
 		}
 		else if( me.turn <= 3){ //TURN 2-3 =================================================================================================
 			for(Robot other : visible){
@@ -107,7 +119,6 @@ public class CastleBot extends Bot{
 						}
 					if(!dup){
 						allocate.worker = other.id;
-						r.log("reallocated");
 						break;
 					}
 				}
@@ -126,9 +137,6 @@ public class CastleBot extends Bot{
 					enemyCastles.add(Logistics.findOpposite(r,c[1],c[0],symmetry).poll());
 				}
 
-				for(Integer[] c: enemyCastles){
-					r.log("Enemy Castle: " + c[1] + ", " + c[0]);
-				}
 				//RESOURCE ALLOCATION ===========================================//
 			
 				Task t = new Task();
@@ -140,7 +148,6 @@ public class CastleBot extends Bot{
 
 				karbList = t.karbList;
 				fuelList = t.fuelList;
-				r.log("karb list size: " + karbList.size());
 				aKarbList = new LinkedList<Resource>();
 				aFuelList = new LinkedList<Resource>();
 			}
@@ -151,15 +158,28 @@ public class CastleBot extends Bot{
 		
 		}
 
-		if(r.karbonite >= 10 && !karbList.equals(null) && karbList.size() > 0){
-			BuildAction a = spawnWorker(true);
-			if(!a.equals(null)){
-				r.log("SPAWNED");
-				int s = 0;
-				s += allocate.x*100;
-				s += allocate.y;
-				r.signal(s,2);
-				return a;
+		if(r.karbonite >= 10 && r.fuel >= 50 && (me.turn == 1 || fullyInit)){
+			if(r.karbonite > 100 && !fuelList.equals(null) && fuelList.size() > 0){
+				r.log("FUELED+============");
+					BuildAction a = spawnWorker(false);
+					if(!a.equals(null)){
+						int s = 0;
+						s += allocate.x*100;
+						s += allocate.y;
+						r.signal(s,2);
+						return a;
+					}
+				
+			}
+			if(!karbList.equals(null) && karbList.size() > 0){
+				BuildAction a = spawnWorker(true);
+				if(!a.equals(null)){
+					int s = 0;
+					s += allocate.x*100;
+					s += allocate.y;
+					r.signal(s,2);
+					return a;
+				}
 			}
 		}
 
@@ -201,7 +221,13 @@ public class CastleBot extends Bot{
 			if(oldList.size()>0){
 				allocate = oldList.poll();
 				allocate.isKarb = karb;
-				for(Integer[] c : enemyCastles)
+				for(Integer[] c : enemyCastles){
+					if(Pathing.distance(c[1],c[0],allocate.x,allocate.y)<=100 ){
+						oldList.add(allocate);
+						allocate = null;
+						return null;
+					}
+				}
 				resList.add(allocate);
 			} else
 				return null;

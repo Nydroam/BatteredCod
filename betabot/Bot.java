@@ -32,4 +32,23 @@ public class Bot{
 	public Action act(){
 		return null;
 	}
+
+	public AttackAction attack(){
+		Robot target = null;
+		for(Robot other : r.getVisibleRobots()){
+			if(r.isVisible(other) && other.team != me.team){
+				int dist = Pathing.distance(other.x,other.y,me.x,me.y);
+				int range = (me.unit == 4) ? 64 : 16;
+				if(dist <= range){
+					target = other;
+
+					if(me.unit == 4 && dist < 16)
+						target = null;
+				}
+			}
+		}
+		if(target.equals(null))
+			return null;
+		return r.attack(target.x-me.x,target.y-me.y);
+	}
 }
