@@ -274,6 +274,7 @@ public class Pathing{
 		int min = 9999;
 		int minDist = 9999;
 		Integer[] move = new Integer[2];
+		move[0] = -1;
 
 		for(int y = 0 - steps; y <= steps; y++){
 			for(int x = 0 - steps; x <= steps; x++){
@@ -299,6 +300,9 @@ public class Pathing{
 					}
 				}
 			}
+		}
+		if (move[0] == -1) {
+			return null;
 		}
 		return move;
 	}
