@@ -57,6 +57,10 @@ public class PilgrimBot extends Bot{
 			endLocs = new boolean[r.map.length][r.map[0].length];
 			endLocs[castle[0]][castle[1]] = true;
 			Cmap = Pathing.rangeBFS(r,endLocs,4,blockers,new Task());
+			/*LinkedList<Integer[]> path = Pathing.rangeAST(r,me.x,me.y,toGo[1],toGo[0],4,blockers);
+			for(Integer[] step: path) {
+				r.log("X: " + step[1] + " Y " + step[0]);
+			}*/
 		}
 		if (!running){
 		for(Robot c: visible){

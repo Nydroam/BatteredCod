@@ -225,11 +225,11 @@ public class Pathing{
 		for (Integer[] node: nodes) {
 			int newDist = distance(node[1],node[0],endX,endY);
 			if (newDist < minDist) {
-				minStep = dirMap[node[1]][node[0]];
+				minStep = dirMap[node[0]][node[1]];
 				minDist = newDist;
 				nextNode = node;
 			} else if (newDist == minDist) {
-				int newStep = dirMap[node[1]][node[0]];
+				int newStep = dirMap[node[0]][node[1]];
 				if (newStep < minStep) {
 					minStep = newStep;
 					nextNode = node;
@@ -254,13 +254,15 @@ public class Pathing{
 			Integer[] node = nodes.poll();
 			//r.log("X : " + node[1] + " Y: " + node[0]);
 			Integer[] nextStep = checkAdj(r,node[1],node[0],startX,startY,range,dirMap,blockers);
+			nextStep[0] = 0 - nextStep[0];
+			nextStep[1] = 0 - nextStep[1];
 			path.add(0,nextStep);
 
 			//create the next node and assign it's coordinates
 			Integer[] nextNode = new Integer[2];
-			r.log("Next X : " + nextStep[1] + " Y: " + nextStep[0]);
-			nextNode[1] = node[1] + nextStep[1];
-			nextNode[0] = node[0] + nextStep[0];
+			//r.log("Next X : " + nextStep[1] + " Y: " + nextStep[0]);
+			nextNode[1] = node[1] - nextStep[1];
+			nextNode[0] = node[0] - nextStep[0];
 
 			if (nextNode[1] == startX && nextNode[0] == startY) {
 				return path;
@@ -270,6 +272,7 @@ public class Pathing{
 		}
 		return path;
 	}
+	//something to note: because the path is generated backwards, every path is not distance efficient at the start
 
 	public static Integer[] checkAdj(MyRobot r, int startX, int startY, int endX, int endY, int range, int[][] dirMap, boolean[][] blockers){
 		int steps = (int)Math.floor(Math.sqrt(range));
