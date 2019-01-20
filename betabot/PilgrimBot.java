@@ -1,7 +1,6 @@
 package bc19;
 import java.util.LinkedList;
 public class PilgrimBot extends Bot{
-	Integer[] home;
 	Integer[] toGo;
 	boolean running;
 	boolean[][] endLocs;
@@ -40,11 +39,9 @@ public class PilgrimBot extends Bot{
 	public Action act(){
 		Robot [] visible = r.getVisibleRobots();
 		if(me.turn == 1){
-			home = new Integer[2];
 			toGo = new Integer[2];
 			castle = new Integer[2];
-			home[1] = me.x;
-			home[0] = me.y;
+	
 			for(Robot c : visible){
 				if (c.unit == 0 && r.isRadioing(c)){
 					int sig = c.signal;
@@ -58,7 +55,7 @@ public class PilgrimBot extends Bot{
 			endLocs[toGo[0]][toGo[1]] = true;
 			Rmap = Pathing.rangeBFS(r,endLocs,4,blockers,new Task());
 			endLocs = new boolean[r.map.length][r.map[0].length];
-			endLocs[home[0]][home[1]] = true;
+			endLocs[castle[0]][castle[1]] = true;
 			Cmap = Pathing.rangeBFS(r,endLocs,4,blockers,new Task());
 		}
 		if (!running){
@@ -72,7 +69,7 @@ public class PilgrimBot extends Bot{
 			running = true;
 		}
 		}
-		if (me.x == home[1] && me.y == home[0] && (me.karbonite != 0 || me.fuel != 0) && running){
+		if (Pathing.distance(me.x,me.y,castle[1],castle[0])<=2 && running){
 			running = false;
 			return r.give(castle[1]-me.x,castle[0]-me.y,me.karbonite,me.fuel);
 			
