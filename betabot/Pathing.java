@@ -186,7 +186,9 @@ public class Pathing{
 		start[1] = startX;
 		nodes.add(start);
 		dirMap[startY][startX] = 0;
-
+		LinkedList<Integer[]> startList = findRange(r,startX,startY,range,blockers,dirMap);
+		if (startList.size() == 0)
+			return null;
 		while(!nodes.isEmpty()) {
 			Integer[] curr = findNext(nodes, endX, endY, dirMap);
 			nodes.remove(curr);

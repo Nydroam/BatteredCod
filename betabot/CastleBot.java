@@ -10,12 +10,13 @@ public class CastleBot extends Bot{
 	LinkedList<Resource> aFuelList;
 	int[][] resMap;
 	Resource allocate;
-
+	Integer[] target;
 	public CastleBot(MyRobot r){
 		super(r);
 	}
 	public Action act(){
 		Robot [] visible = r.getVisibleRobots();
+		target = null;
 		r.log("Turn: " + me.turn);
 		if(me.turn == 1){//TURN 1---------------------------------------------------------------------------------------
 
@@ -100,8 +101,17 @@ public class CastleBot extends Bot{
 				}
 			}
 			//broadcast MY castle y coordinate
-			if(me.turn == 2)
+			if(me.turn == 2){
 				r.castleTalk(me.y + 1);
+				Action a = spawnSoldier(4);
+				if(!a.equals(null)){//spawn defensive soldier on turn 2
+					int s = 0;
+					s += target[1]*100;
+					s += target[0];
+					r.signal(s,2);
+					return a;
+				}
+			}
 		}
 
 		if(!allocate.equals(null) && !aKarbList.equals(null)){//match a workerid with a resource
@@ -155,11 +165,21 @@ public class CastleBot extends Bot{
 
 		if(fullyInit){//FULLY INITIALIZED, START DOING STUFF ====================================================================================
 			
-		
+			if(r.karbonite >= 25 && r.fuel >= 50 && me.turn > 4) {
+				Action a = spawnSoldier(4);
+				if(!a.equals(null)){//spawn defensive soldier on turn 2
+					int s = 10000;
+					s += target[1]*100;
+					s += target[0];
+					r.signal(s,2);
+					return a;
+				}
+			}
+			
 		}
 
-		if(r.karbonite >= 10 && r.fuel >= 50 && (me.turn == 1 || fullyInit)){
-			if(r.karbonite > 100 && !fuelList.equals(null) && fuelList.size() > 0){
+		if(r.karbonite >= 10 && r.fuel >= 50 && (me.turn == 1 || (fullyInit && (me.turn >20 || fuelList.get(0).priority < 5 || karbList.get(0).priority < 5)))) {
+			if((r.karbonite > 90 || (fuelList.get(0).priority < 5 && aKarbList.size()>0)) && !fuelList.equals(null) && fuelList.size() > 0) {
 				r.log("FUELED+============");
 					BuildAction a = spawnWorker(false);
 					if(!a.equals(null)){
@@ -197,6 +217,18 @@ public class CastleBot extends Bot{
 		return true;
 	}
 
+	public BuildAction spawnSoldier(int unit){
+		if(target == null)
+			target = enemyCastles.get(0);
+
+		LinkedList<Integer[]> path = Pathing.rangeAST(r,me.x,me.y,target[1],target[0],2,blockers);
+		if (!path.equals(null) && path.size()>0) {
+		Integer[] coord = path.poll();
+		
+			return r.buildUnit(unit,coord[1],coord[0]);
+		}
+		return null;
+	}
 	public BuildAction spawnWorker(boolean karb){
 		LinkedList<Resource> resList;
 		if(karb)
@@ -258,8 +290,9 @@ public class CastleBot extends Bot{
 		}
 		return null;*/
 		LinkedList<Integer[]> path = Pathing.rangeAST(r,me.x,me.y,allocate.x,allocate.y,2,blockers);
+		if (!path.equals(null) && path.size()>0) {
 		Integer[] coord = path.poll();
-		if (coord != null) {
+		
 			return r.buildUnit(2,coord[1],coord[0]);
 		}
 		return null;
