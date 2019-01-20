@@ -21,7 +21,7 @@ public class ProphetBot extends Bot{
 			endLocs[c[0]][c[1]] = true;
 			}
 		Rmap = Pathing.rangeBFS(r,endLocs,4,blockers,new Task());
-		attack = true;
+		
 	}
 	public void extractSignal(int signal){
 		strat = (int)Math.floor(signal/10000);
@@ -47,6 +47,7 @@ public class ProphetBot extends Bot{
 			}
 			if (strat == 2){
 				calcMap();
+				attack = true;
 			}
 		}
 	}
@@ -79,14 +80,22 @@ public class ProphetBot extends Bot{
 					castle[1] = c.x;
 					castle[0] = c.y;
 					int symmetry = Logistics.symmetry(r.map,r);
-					targets.add(Logistics.findOpposite(r,castle[1],castle[0],symmetry));
+					for(Integer[] coor:Logistics.findOpposite(r,castle[1],castle[0],symmetry))
+						targets.add(coor);
 					break;
 				}
 			}
+			calcMap();
 		}
-		if (r.isRadioing(castleBot)){
-			int sig = c.signal;
+		r.log("Strat" + strat);
+		r.log("is radioing " + r.isRadioing(castleBot) + " - " +castleBot.id);
+		if (castleBot.signal > -1 && strat != 2){
+			int sig = castleBot.signal;
+			r.log("Signal: " + sig);
 			extractSignal(sig);
+			if(strat == 2){
+				r.log("ATTTCK");
+			}
 		}
 		for(int i = 0; i < targets.size(); i++){
 			Integer[] c = targets.get(i);
@@ -138,7 +147,7 @@ public class ProphetBot extends Bot{
 				return atk;
 		}
 
-		if(me.turn <= 2 || strat == 1 || r.fuelMap[me.y][me.x] || r.karboniteMap[me.y][me.x]){//forward march
+		if(me.turn <= 2 || strat == 2 || r.fuelMap[me.y][me.x] || r.karboniteMap[me.y][me.x]){//forward march
 			Integer[] move = nextMove(Rmap);
 			Action a = r.move(move[1] - me.x, move[0] -me.y);
 			if(!a.equals(null))

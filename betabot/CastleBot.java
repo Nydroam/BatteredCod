@@ -11,6 +11,8 @@ public class CastleBot extends Bot{
 	int[][] resMap;
 	Resource allocate;
 	Integer[] target;
+	
+	int signalCount;
 	public CastleBot(MyRobot r){
 		super(r);
 	}
@@ -108,10 +110,7 @@ public class CastleBot extends Bot{
 				r.castleTalk(me.y + 1);
 				Action a = spawnSoldier(4);
 				if(!a.equals(null)){//spawn defensive soldier on turn 2
-					int s = 0;
-					s += target[1]*100;
-					s += target[0];
-					r.signal(s,2);
+			
 					return a;
 				}
 			}
@@ -153,6 +152,8 @@ public class CastleBot extends Bot{
 					enemyCastles.add(Logistics.findOpposite(r,c[1],c[0],symmetry).poll());
 				}
 
+				
+
 				//RESOURCE ALLOCATION ===========================================//
 				if(numCastles > 1){
 				Task t = new Task();
@@ -169,7 +170,7 @@ public class CastleBot extends Bot{
 			}
 		}
 		Action atk = attack();
-		if(!atk.equals(null))
+		if(me.turn!=100&&!atk.equals(null))
 			return atk;
 		if(fullyInit){//FULLY INITIALIZED, START DOING STUFF ====================================================================================
 			
@@ -188,15 +189,26 @@ public class CastleBot extends Bot{
 							res.worker = -1;
 					}
 				}
-
-
-			if(r.karbonite >= 40 && r.fuel >= 50 && me.turn > 4) {
+			if(me.turn == 100){
+				if(numCastles == 1){
+					r.signal(20000 + me.x * 100 + me.y,100);
+				}else
+					signalCount = numCastles-1;
+			}
+			if(signalCount > 0){
+				int s = 10000;
+				if(signalCount == 1)
+					s = 20000;
+				Integer[] c = enemyCastles.get(signalCount);
+				
+				s += c[1] * 100 + c[0];
+				r.log("Sending Signal: " + s);
+				r.signal(s,100);
+				signalCount--;
+			}
+			else if(r.karbonite >= 40 && r.fuel >= 50 && me.turn > 4) {
 				Action a = spawnSoldier(4);
 				if(!a.equals(null)){//spawn defensive soldier on turn 2
-					int s = 10000;
-					s += target[1]*100;
-					s += target[0];
-					r.signal(s,2);
 					return a;
 				}
 			}
@@ -281,7 +293,7 @@ public class CastleBot extends Bot{
 				allocate.isKarb = karb;
 				for(Integer[] c : enemyCastles){
 					if(Pathing.distance(c[1],c[0],allocate.x,allocate.y)<=100 ){
-						oldList.add(allocate);
+						//oldList.add(allocate);
 						allocate = null;
 						return null;
 					}
