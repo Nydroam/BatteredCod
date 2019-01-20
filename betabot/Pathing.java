@@ -66,7 +66,7 @@ public class Pathing{
 				//booleans to check whether not a min/max for this row has been found
 
 				if(dist <= range && checkBounds(r, x + startX, y + startY, blockers) && dirMap[y + startY][x + startX] == 99){
-					Integer[] coor = new Integer[3];
+					Integer[] coor = new Integer[4];
 					coor[0] = y + startY;
 					coor[1] = x + startX;
 					//coor[2] = 1;
@@ -122,11 +122,13 @@ public class Pathing{
 		for( int y = 0; y < endLocs.length; y++ ){
 			for( int x = 0; x < endLocs.length; x++ ){
 				if( endLocs[y][x] ){
-					Integer[] coor = new Integer[2];
+					Integer[] coor = new Integer[4];
 					coor[0] = y;
 					coor[1] = x;
 					dirMap[y][x] = 0;
 					nodes.add(coor);
+					if(r.me.y==y && r.me.x==x )
+						coor[3] = 1;
 				}
 			}
 		}
@@ -141,18 +143,19 @@ public class Pathing{
 				Integer[] coor = nextList.poll();
 				int coorY = coor[0];
 				int coorX = coor[1];
-				
+				if(curr[3]==1)
+					coor[3]=1;
 				if(dirMap[coorY][coorX] > step + 1){
 					if(coor[2]==1)
 						nodes.add(coor);
 					dirMap[coorY][coorX] = step + 1;
-					if(t.markKarb){
+					if(t.markKarb && coor[3] == 1){
 						boolean[][] karbMap = r.getKarboniteMap();
 						if(karbMap[coorY][coorX]){
 							t.karbList.add(new Resource(coorX,coorY,step));
 						}
 					}
-					if(t.markFuel){
+					if(t.markFuel && coor[3] == 1){
 						boolean[][] fuelMap = r.getFuelMap();
 						if(fuelMap[coorY][coorX]){
 							t.fuelList.add(new Resource(coorX,coorY,step));
@@ -164,7 +167,7 @@ public class Pathing{
 		}
 		long diff = System.currentTimeMillis() - startTime;
 		r.log("BFS Time: " + diff + " ms");
-		printMap(dirMap,r);
+		//printMap(dirMap,r);
 		return dirMap;
 	}
 

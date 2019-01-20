@@ -61,18 +61,7 @@ public class CastleBot extends Bot{
 			if(numCastles == 3)
 				r.castleTalk(me.x + 101);
 
-			//RESOURCE ALLOCATION ===========================================//
-			Task t = new Task();
-			boolean[][] b = new boolean[r.map.length][r.map[0].length];
-			boolean[][] endLocs = new boolean[r.map.length][r.map[0].length];
-			endLocs[me.y][me.x] = true;
-			resMap = Pathing.rangeBFS(r,endLocs,4,b,t);
-
-			karbList = t.karbList;
-			fuelList = t.fuelList;
-			r.log("karb list size: " + karbList.size());
-			aKarbList = new LinkedList<Resource>();
-			aFuelList = new LinkedList<Resource>();
+			
 			r.log("Symmetry: " + symmetry);
 		}
 		else if( me.turn <= 3){ //TURN 2-3 =================================================================================================
@@ -85,6 +74,7 @@ public class CastleBot extends Bot{
 							
 							found = true;
 							l[0] = c;
+
 							break;
 						}
 					}
@@ -102,7 +92,7 @@ public class CastleBot extends Bot{
 				r.castleTalk(me.y + 1);
 		}
 
-		if(!allocate.equals(null)){//match a workerid with a resource
+		if(!allocate.equals(null) && !aKarbList.equals(null)){//match a workerid with a resource
 			LinkedList<Resource> resList;
 			if(allocate.isKarb)
 				resList = aKarbList;
@@ -117,22 +107,51 @@ public class CastleBot extends Bot{
 						}
 					if(!dup){
 						allocate.worker = other.id;
+						r.log("reallocated");
 						break;
 					}
 				}
 			}
+
 			allocate = null;
 		}
 
 		if(!fullyInit){
 			fullyInit = fullyInitialize();
+			if(fullyInit){
+				//ENEMY CASTLE INIT
+				for(Integer[] c: myCastles){
+					if(c[0]==me.y && c[1] == me.x)
+						continue;
+					enemyCastles.add(Logistics.findOpposite(r,c[1],c[0],symmetry).poll());
+				}
+
+				for(Integer[] c: enemyCastles){
+					r.log("Enemy Castle: " + c[1] + ", " + c[0]);
+				}
+				//RESOURCE ALLOCATION ===========================================//
+			
+				Task t = new Task();
+				boolean[][] b = new boolean[r.map.length][r.map[0].length];
+				boolean[][] endLocs = new boolean[r.map.length][r.map[0].length];
+				for(Integer[] c : myCastles)
+					endLocs[c[0]][c[1]] = true;
+				resMap = Pathing.rangeBFS(r,endLocs,4,b,t);
+
+				karbList = t.karbList;
+				fuelList = t.fuelList;
+				r.log("karb list size: " + karbList.size());
+				aKarbList = new LinkedList<Resource>();
+				aFuelList = new LinkedList<Resource>();
+			}
 		}
 
 		if(fullyInit){//FULLY INITIALIZED, START DOING STUFF ====================================================================================
 			
+		
 		}
 
-		if(r.karbonite >= 10 && aKarbList.size() <3){
+		if(r.karbonite >= 10 && !karbList.equals(null) && karbList.size() > 0){
 			BuildAction a = spawnWorker(true);
 			if(!a.equals(null)){
 				r.log("SPAWNED");
@@ -182,6 +201,7 @@ public class CastleBot extends Bot{
 			if(oldList.size()>0){
 				allocate = oldList.poll();
 				allocate.isKarb = karb;
+				for(Integer[] c : enemyCastles)
 				resList.add(allocate);
 			} else
 				return null;
