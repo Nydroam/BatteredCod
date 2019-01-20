@@ -226,16 +226,16 @@ public class CastleBot extends Bot{
 			return r.buildUnit(2,coor[1] - me.x, coor[0] - me.y);
 		}
 		return null;*/
-		Integer[] coord = Pathing.checkAdj(r,me.x,me.y,allocate.x,allocate.y,2,nullMap,blockers);
+		/*Integer[] coord = Pathing.checkAdj(r,me.x,me.y,allocate.x,allocate.y,2,nullMap,blockers);
 		if (coord != null) {
 			return r.buildUnit(2,coord[1], coord[0]);
 		}
-		return null;
-		/*LinkedList<Integer[]> path = Pathing.rangeAST(r,me.x,me.y,allocate.x,allocate.y,2,blockers);
+		return null;*/
+		LinkedList<Integer[]> path = Pathing.rangeAST(r,me.x,me.y,allocate.x,allocate.y,2,blockers);
 		Integer[] coord = path.poll();
 		if (coord != null) {
 			return r.buildUnit(2,coord[1],coord[0]);
 		}
-		return null;*/
+		return null;
 	}
 }
