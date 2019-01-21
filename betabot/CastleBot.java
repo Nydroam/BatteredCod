@@ -20,6 +20,8 @@ public class CastleBot extends Bot{
 		Robot [] visible = r.getVisibleRobots();
 		target = null;
 		r.log("Turn: " + me.turn);
+		if(signalCount == 0)
+			signalCount = -1;
 		if(me.turn == 1){//TURN 1---------------------------------------------------------------------------------------
 
 			//Initialization
@@ -80,7 +82,7 @@ public class CastleBot extends Bot{
 			aKarbList = new LinkedList<Resource>();
 			aFuelList = new LinkedList<Resource>();
 
-			r.log("Turn 1 resources1");
+			//r.log("Turn 1 resources1");
 		}
 		else if( me.turn <= 3){ //TURN 2-3 =================================================================================================
 			for(Robot other : visible){
@@ -189,7 +191,7 @@ public class CastleBot extends Bot{
 							res.worker = -1;
 					}
 				}
-			if(me.turn == 100){
+			if(me.turn%100 == 0 && me.turn > 0){
 				if(numCastles == 1){
 					r.signal(20000 + me.x * 100 + me.y,100);
 				}else
@@ -202,11 +204,11 @@ public class CastleBot extends Bot{
 				Integer[] c = enemyCastles.get(signalCount);
 				
 				s += c[1] * 100 + c[0];
-				r.log("Sending Signal: " + s);
+				//r.log("Sending Signal: " + s);
 				r.signal(s,100);
 				signalCount--;
 			}
-			else if(r.karbonite >= 40 && r.fuel >= 50 && me.turn > 4) {
+			if(r.karbonite >= 40 && r.fuel >= 50 && me.turn > 4) {
 				Action a = spawnSoldier(4);
 				if(!a.equals(null)){//spawn defensive soldier on turn 2
 					return a;
@@ -215,9 +217,9 @@ public class CastleBot extends Bot{
 			
 		}
 
-		if(r.karbonite >= 10 && r.fuel >= 50 && (me.turn == 1 || (fullyInit && (me.turn >100 || fuelList.get(0).priority < 5 || karbList.get(0).priority < 5)))) {
+		if(signalCount == -1 && r.karbonite >= 10 && r.fuel >= 50 && (me.turn == 1 || (fullyInit && (me.turn >100 || fuelList.get(0).priority < 5 || karbList.get(0).priority < 5)))) {
 			if(me.turn > 1 && (r.karbonite > 90 || (fuelList.get(0).priority < 5 && aKarbList.size()>0)) && !fuelList.equals(null) && fuelList.size() > 0) {
-				r.log("FUELED+============");
+				//r.log("FUELED+============");
 					BuildAction a = spawnWorker(false);
 					if(!a.equals(null)){
 						int s = 0;
@@ -229,7 +231,7 @@ public class CastleBot extends Bot{
 				
 			}
 			if(!karbList.equals(null) && karbList.size() > 0){
-				r.log("Karbonite worker");
+				//r.log("Karbonite worker");
 				BuildAction a = spawnWorker(true);
 				if(!a.equals(null)){
 					int s = 0;

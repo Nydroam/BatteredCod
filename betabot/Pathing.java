@@ -206,10 +206,10 @@ public class Pathing{
 
 				if (coorX == endX && coorY == endY) {
 					dirMap[coorY][coorX] = 98;
-					printMap(dirMap,r);
+					//printMap(dirMap,r);
 					path = createPath(r,startX,startY,endX,endY,range,dirMap,blockers);
 					long diff = System.currentTimeMillis() - startTime;
-					r.log("AST Time: " + diff + " ms");
+					//r.log("AST Time: " + diff + " ms");
 					return path;
 				}
 				

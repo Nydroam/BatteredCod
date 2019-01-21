@@ -147,7 +147,7 @@ public class ProphetBot extends Bot{
 				return atk;
 		}
 
-		if(me.turn <= 2 || strat == 2 || r.fuelMap[me.y][me.x] || r.karboniteMap[me.y][me.x]){//forward march
+		if(me.turn <= 4 || strat == 2 || r.fuelMap[me.y][me.x] || r.karboniteMap[me.y][me.x]){//forward march
 			Integer[] move = nextMove(Rmap);
 			Action a = r.move(move[1] - me.x, move[0] -me.y);
 			if(!a.equals(null))
