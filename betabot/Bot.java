@@ -5,6 +5,7 @@ public class Bot{
 	MyRobot r;
 	Robot me;
 	boolean[][] blockers;
+	boolean[][] lattice;
 
 	//when the bot has all the information it needs to function
 	boolean fullyInit;
@@ -42,10 +43,12 @@ public class Bot{
 				if(me.unit == 4 || me.unit == 0)
 					range = 64;
 				if(dist <= range){
-					target = other;
+					if(target == null || target.unit != 2 || other.unit != 2)
+						target = other;
 
 					if(me.unit == 4 && dist < 16)
 						target = null;
+
 				}
 			}
 		}

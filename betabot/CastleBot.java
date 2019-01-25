@@ -20,6 +20,12 @@ public class CastleBot extends Bot{
 		Robot [] visible = r.getVisibleRobots();
 		target = null;
 		r.log("Turn: " + me.turn);
+		/*if(!aFuelList.equals(null) && me.id==2533)
+			for(Resource res: aFuelList)
+				r.log("Fuel X: " + res.x + "Y: " + res.y + " ID: " + res.worker);
+		if(!aKarbList.equals(null)&& me.id == 2533)
+			for(Resource res: aKarbList)
+				r.log("Karb X: " + res.x + "Y: " + res.y + " ID: " + res.worker);*/
 		if(signalCount == 0)
 			signalCount = -1;
 		if(me.turn == 1){//TURN 1---------------------------------------------------------------------------------------
@@ -67,12 +73,12 @@ public class CastleBot extends Bot{
 				r.castleTalk(me.x + 101);
 
 			
-			r.log("Symmetry: " + symmetry);
+			//r.log("Symmetry: " + symmetry);
 
 			Task t = new Task();
 			boolean[][] b = new boolean[r.map.length][r.map[0].length];
 			boolean[][] endLocs = new boolean[r.map.length][r.map[0].length];
-			r.log("Turn 1 resources0");
+			
 			endLocs[me.y][me.x] = true;
 
 			resMap = Pathing.rangeBFS(r,endLocs,4,b,t);
@@ -107,27 +113,29 @@ public class CastleBot extends Bot{
 					}
 				}
 			}
-			//broadcast MY castle y coordinate
-			if(me.turn == 2){
-				r.castleTalk(me.y + 1);
-				Action a = spawnSoldier(4);
-				if(!a.equals(null)){//spawn defensive soldier on turn 2
 			
-					return a;
-				}
-			}
 		}
 
 		if(!allocate.equals(null) && !aKarbList.equals(null)){//match a workerid with a resource
 			LinkedList<Resource> resList;
-			if(allocate.isKarb)
+			LinkedList<Resource> otherList;
+			if(allocate.isKarb){
 				resList = aKarbList;
-			else
+				otherList = aFuelList;
+			}
+			else{
 				resList = aFuelList;
+				otherList = aKarbList;
+			}
+
 			for(Robot other:visible){
-				if(other.unit == 2 && other.team == me.team){
+				if(other.unit == 2 && Pathing.distance(other.x,other.y,me.x,me.y) <=36 && other.team == me.team ){
 					boolean dup = false;
 					for(Resource res: resList)
+						if(other.id == res.worker){
+							dup = true;
+						}
+					for(Resource res: otherList)
 						if(other.id == res.worker){
 							dup = true;
 						}
@@ -140,6 +148,18 @@ public class CastleBot extends Bot{
 
 			allocate = null;
 		}
+
+		//broadcast MY castle y coordinate
+			if(me.turn == 2){
+				r.castleTalk(me.y + 1);
+				if(r.karbonite >= 25){
+				Action a = spawnSoldier(4);
+				if(!a.equals(null)){//spawn defensive soldier on turn 2
+			
+					return a;
+				}
+				}
+			}
 
 		if(!fullyInit){
 			fullyInit = fullyInitialize();
@@ -191,9 +211,10 @@ public class CastleBot extends Bot{
 							res.worker = -1;
 					}
 				}
-			if(me.turn%100 == 0 && me.turn > 0){
+			if(me.turn%75 == 0 && me.turn > 0){
 				if(numCastles == 1){
-					r.signal(20000 + me.x * 100 + me.y,100);
+					Integer[] enemy = enemyCastles.get(0);
+					r.signal(20000 + enemy[1] * 100 + enemy[0],100);
 				}else
 					signalCount = numCastles-1;
 			}
@@ -208,7 +229,7 @@ public class CastleBot extends Bot{
 				r.signal(s,100);
 				signalCount--;
 			}
-			if(r.karbonite >= 40 && r.fuel >= 50 && me.turn > 4) {
+			if(r.karbonite >= 25 && r.fuel >= 50 && me.turn > 4 ) {
 				Action a = spawnSoldier(4);
 				if(!a.equals(null)){//spawn defensive soldier on turn 2
 					return a;
@@ -217,8 +238,13 @@ public class CastleBot extends Bot{
 			
 		}
 
-		if(signalCount == -1 && r.karbonite >= 10 && r.fuel >= 50 && (me.turn == 1 || (fullyInit && (me.turn >100 || fuelList.get(0).priority < 5 || karbList.get(0).priority < 5)))) {
-			if(me.turn > 1 && (r.karbonite > 90 || (fuelList.get(0).priority < 5 && aKarbList.size()>0)) && !fuelList.equals(null) && fuelList.size() > 0) {
+		if(signalCount == -1 && r.karbonite >= 10 && r.fuel >= 50 && (me.turn == 1 || fullyInit)) {
+			boolean deadFuel = false;
+			for(Resource res: aFuelList){
+				if(res.worker == -1)
+					deadFuel = true;
+			}
+			if(me.turn > 1 && !fuelList.equals(null) && (fuelList.size() > 0 || deadFuel)) {
 				//r.log("FUELED+============");
 					BuildAction a = spawnWorker(false);
 					if(!a.equals(null)){
@@ -230,7 +256,12 @@ public class CastleBot extends Bot{
 					}
 				
 			}
-			if(!karbList.equals(null) && karbList.size() > 0){
+			boolean deadKarb = false;
+			for(Resource res: aKarbList){
+				if(res.worker == -1)
+					deadKarb = true;
+			}
+			if(!karbList.equals(null) && (karbList.size() > 0 || deadKarb)){
 				//r.log("Karbonite worker");
 				BuildAction a = spawnWorker(true);
 				if(!a.equals(null)){
@@ -293,7 +324,12 @@ public class CastleBot extends Bot{
 			if(oldList.size()>0){
 				allocate = oldList.poll();
 				allocate.isKarb = karb;
+				if(allocate.priority > 5){
+					allocate = null;
+					return null;
+				}
 				for(Integer[] c : enemyCastles){
+
 					if(Pathing.distance(c[1],c[0],allocate.x,allocate.y)<=100 ){
 						//oldList.add(allocate);
 						allocate = null;

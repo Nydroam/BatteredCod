@@ -22,7 +22,7 @@ public class ProphetBot extends Bot{
 			endLocs[c[0]][c[1]] = true;
 			}
 		Rmap = Pathing.rangeBFS(r,endLocs,4,blockers,new Task());
-		
+		//Pathing.printMap(Rmap,r);
 	}
 	public void extractSignal(int signal){
 		strat = (int)Math.floor(signal/10000);
@@ -91,10 +91,10 @@ public class ProphetBot extends Bot{
 		castleBot = r.getRobot(castleId);
 		if (castleBot != null && r.isRadioing(castleBot) && strat != 2){
 			int sig = castleBot.signal;
-			r.log("Signal: " + sig);
+			//r.log("Signal: " + sig);
 			extractSignal(sig);
 			if(strat == 2){
-				r.log("ATTTCK");
+				//r.log("ATTTCK");
 			}
 		}
 		for(int i = 0; i < targets.size(); i++){
@@ -126,10 +126,10 @@ public class ProphetBot extends Bot{
 				enemyCoord[1] = other.x;
 				enemyCoord[0] = other.y;
 				enemies.add(enemyCoord);
-				r.log("Enemy At: " + other.x + "," + other.y);
+				//r.log("Enemy At: " + other.x + "," + other.y);
 				if(dist <= 16) {
 					minRange = true;
-					r.log("Start Running");
+					//r.log("Start Running");
 				}
 			}
 		}
@@ -148,6 +148,7 @@ public class ProphetBot extends Bot{
 		}
 
 		if(me.turn <= 4 || strat == 2 || r.fuelMap[me.y][me.x] || r.karboniteMap[me.y][me.x]){//forward march
+			//r.log("MARCHING forward");
 			Integer[] move = nextMove(Rmap);
 			Action a = r.move(move[1] - me.x, move[0] -me.y);
 			if(!a.equals(null))

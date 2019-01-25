@@ -63,36 +63,54 @@ public class Pathing{
 
 				int dist = distance(0,0,x,y);
 
-				//booleans to check whether not a min/max for this row has been found
-
-				if(dist <= range && checkBounds(r, x + startX, y + startY, blockers) && dirMap[y + startY][x + startX] == 99){
-					Integer[] coor = new Integer[4];
-					coor[0] = y + startY;
-					coor[1] = x + startX;
-					//coor[2] = 1;
-					if(!minX){
-						minX = true;
-						coor[2] = 1;
-					}else if (!maxX){
-						maxX = true;
-						coor[2] = 1;
-					}else{
-						results.get(results.size()-1)[2]=0;
-						coor[2] = 1;
+				
+				if(dist <= range && checkBounds(r, x + startX, y + startY, blockers) ) {
+					if(dirMap[y + startY][x + startX] == 99){
+						Integer[] coor = new Integer[4];
+						coor[0] = y + startY;
+						coor[1] = x + startX;
+						//coor[2] = 1;
+						if(!minX){
+							minX = true;
+							coor[2] = 1;
+						}else if (!maxX){
+							maxX = true;
+							coor[2] = 1;
+						}else{
+							results.get(results.size()-1)[2]=0;
+							coor[2] = 1;
+						}
+						if(!yMin[y+steps]){
+							yMin[y+steps] = true;
+							coor[2] = 1;
+						}else if (!yMax[y+steps]){
+							yMax[y+steps] = true;
+							prevCoor.set(y+steps,coor);
+							coor[2] = 1;
+						}else{
+							prevCoor.get(y+steps)[2] = 0;
+							prevCoor.set(y+steps,coor);
+							coor[2] = 1;
+						}
+						results.add(coor);
 					}
-					if(!yMin[y+steps]){
-						yMin[y+steps] = true;
-						coor[2] = 1;
-					}else if (!yMax[y+steps]){
-						yMax[y+steps] = true;
-						prevCoor.set(y+steps,coor);
-						coor[2] = 1;
-					}else{
-						prevCoor.get(y+steps)[2] = 0;
-						prevCoor.set(y+steps,coor);
-						coor[2] = 1;
+					else{
+						if(!minX){
+							minX = true;
+						}
+						else if(maxX){
+							//r.log("RESULTS " + results);
+							results.get(results.size()-1)[2]=0;
+							maxX = false;
+						}
+						if(!yMin[y+steps]){
+							yMin[y+steps] = true;
+						}
+						else if(yMax[y+steps]){
+							prevCoor.get(y+steps)[2] = 0;
+							yMax[y+steps] = false;
+						}
 					}
-					results.add(coor);
 				}
 			}
 		}
