@@ -131,6 +131,20 @@ public class Pathing{
 		int yBound = r.map.length;
 		int xBound = r.map[0].length;
 
+		boolean[][] lattice = new boolean[r.map.length][r.map[0].length];
+		lattice = new boolean[r.map.length][r.map[0].length];
+		for(int y = 0; y < r.map.length; y++){
+			for(int x = 0; x < r.map[0].length; x++){
+				if(y % 2 == 0){
+					if(x % 2 == 0)
+						lattice[y][x] = true;
+				}
+				else{
+					if(x % 2 == 1)
+						lattice[y][x] = true;
+				}
+			}
+		}
 		int[][] dirMap = new int[yBound][xBound];
 
 		for(int i = 0; i < dirMap.length; i++)
@@ -176,8 +190,16 @@ public class Pathing{
 					if(t.markFuel && coor[3] == 1){
 						boolean[][] fuelMap = r.getFuelMap();
 						if(fuelMap[coorY][coorX]){
-							t.fuelList.add(new Resource(coorX,coorY,step));
+							t.fuelList.add(new Resource(coorX,coorY,step + 1));
 						}
+					}
+					if(lattice[coorY][coorX]&& coor[3] == 1){
+						Integer[] l = new Integer[4];
+						l[0] = coorY;
+						l[1] = coorX;
+						l[2] = -1;
+						l[3] = step + 1;
+						t.lattice.add(l);
 					}
 				}
 			}

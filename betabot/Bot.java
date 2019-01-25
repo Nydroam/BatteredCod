@@ -5,7 +5,6 @@ public class Bot{
 	MyRobot r;
 	Robot me;
 	boolean[][] blockers;
-	boolean[][] lattice;
 
 	//when the bot has all the information it needs to function
 	boolean fullyInit;
@@ -18,6 +17,8 @@ public class Bot{
 
 	public Bot(MyRobot r){
 		update(r);
+		//create checkerboard pattern of TF
+
 	}
 	public void update(MyRobot newr){
 		this.r = newr;

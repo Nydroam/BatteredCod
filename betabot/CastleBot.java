@@ -8,6 +8,7 @@ public class CastleBot extends Bot{
 	LinkedList<Resource> aKarbList;
 	LinkedList<Resource> fuelList;
 	LinkedList<Resource> aFuelList;
+	LinkedList<Integer[]> lattice;
 	int[][] resMap;
 	Resource allocate;
 	Integer[] target;
@@ -87,7 +88,7 @@ public class CastleBot extends Bot{
 			fuelList = t.fuelList;
 			aKarbList = new LinkedList<Resource>();
 			aFuelList = new LinkedList<Resource>();
-
+			lattice = t.lattice;
 			//r.log("Turn 1 resources1");
 		}
 		else if( me.turn <= 3){ //TURN 2-3 =================================================================================================
@@ -188,6 +189,11 @@ public class CastleBot extends Bot{
 				karbList = t.karbList;
 				karbList.poll();
 				fuelList = t.fuelList;
+				lattice = t.lattice;
+					int[][] printLattice = new int[r.map.length][r.map[0].length];
+					for(Integer[] l : lattice)
+						printLattice[l[0]][l[1]] = l[2];
+					Pathing.printMap(printLattice,r);
 				}
 			}
 		}
