@@ -262,8 +262,7 @@ public class Pathing{
 				}
 			}
 		}
-		path = createPath(r,startX,startY,endX,endY,range,dirMap,blockers);
-		return path;
+		return null;
 	}
 
 	public static Integer[] findNext(LinkedList<Integer[]> nodes, int endX, int endY, int[][] dirMap) {
