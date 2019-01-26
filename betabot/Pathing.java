@@ -231,7 +231,7 @@ public class Pathing{
 						}
 						//r.log("works2");
 					}
-					if(lattice[coorY][coorX]&& coor[3] == 1 && !rMap[coorY][coorX] && Pathing.distance(r.me.x,r.me.y,coorX,coorY) > 2){
+					if(lattice[coorY][coorX]&& coor[3] == 1 && !rMap[coorY][coorX] && step+1>1){
 						Integer[] l = new Integer[4];
 						l[0] = coorY;
 						l[1] = coorX;
