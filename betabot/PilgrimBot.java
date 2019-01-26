@@ -41,9 +41,10 @@ public class PilgrimBot extends Bot{
 		if(me.turn == 1){
 			toGo = new Integer[2];
 			castle = new Integer[2];
-	
+			symmetry = Logistics.symmetry(r.map,r);
 			for(Robot c : visible){
 				if (c.unit == 0 && r.isRadioing(c)){
+					enemyCastles=(Logistics.findOpposite(r,c.x,c.y,symmetry));
 					int sig = c.signal;
 					castle[1] = c.x;
 					castle[0] = c.y;
@@ -51,12 +52,36 @@ public class PilgrimBot extends Bot{
 					break;
 				}
 			}
+
+			if(enemyCastles != null){
+			for(int y = 0; y < blockers.length; y++){
+				for(int x = 0; x < blockers[0].length; x++){
+					for(Integer[] c : enemyCastles){
+						if(Pathing.distance(c[1],c[0],x,y) <= 100)
+							blockers[y][x] = true;
+					}
+				}
+			}
+		}
+
 			endLocs = new boolean[r.map.length][r.map[0].length];
 			endLocs[toGo[0]][toGo[1]] = true;
 			Rmap = Pathing.rangeBFS(r,endLocs,4,blockers,new Task());
 			endLocs = new boolean[r.map.length][r.map[0].length];
 			endLocs[castle[0]][castle[1]] = true;
 			Cmap = Pathing.rangeBFS(r,endLocs,4,blockers,new Task());
+		}
+
+		
+		if(enemyCastles != null){
+			for(int y = 0; y < blockers.length; y++){
+				for(int x = 0; x < blockers[0].length; x++){
+					for(Integer[] c : enemyCastles){
+						if(Pathing.distance(c[1],c[0],x,y) <= 100)
+							blockers[y][x] = true;
+					}
+				}
+			}
 		}
 		if(me.turn % 10 == 0){
 			endLocs = new boolean[r.map.length][r.map[0].length];

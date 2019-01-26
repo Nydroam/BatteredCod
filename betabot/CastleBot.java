@@ -80,6 +80,14 @@ public class CastleBot extends Bot{
 			boolean[][] b = new boolean[r.map.length][r.map[0].length];
 			boolean[][] endLocs = new boolean[r.map.length][r.map[0].length];
 			
+			for(int y = 0; y < b.length; y++){
+				for(int x = 0; x < b[0].length; x++){
+					for(Integer[] c : enemyCastles){
+						if(Pathing.distance(c[1],c[0],x,y) <= 100)
+							b[y][x] = true;
+					}
+				}
+			}
 			endLocs[me.y][me.x] = true;
 
 			resMap = Pathing.rangeBFS(r,endLocs,4,b,t);
@@ -189,6 +197,14 @@ public class CastleBot extends Bot{
 				if(numCastles > 1){
 				Task t = new Task();
 				boolean[][] b = new boolean[r.map.length][r.map[0].length];
+				for(int y = 0; y < b.length; y++){
+				for(int x = 0; x < b[0].length; x++){
+					for(Integer[] c : enemyCastles){
+						if(Pathing.distance(c[1],c[0],x,y) <= 100)
+							b[y][x] = true;
+					}
+				}
+			}
 				boolean[][] endLocs = new boolean[r.map.length][r.map[0].length];
 				for(Integer[] c : myCastles)
 					endLocs[c[0]][c[1]] = true;
