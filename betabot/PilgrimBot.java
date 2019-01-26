@@ -57,10 +57,20 @@ public class PilgrimBot extends Bot{
 			endLocs = new boolean[r.map.length][r.map[0].length];
 			endLocs[castle[0]][castle[1]] = true;
 			Cmap = Pathing.rangeBFS(r,endLocs,4,blockers,new Task());
+			//Pathing.printMap(Rmap,r);
 			/*LinkedList<Integer[]> path = Pathing.rangeAST(r,me.x,me.y,toGo[1],toGo[0],4,blockers);
 			for(Integer[] step: path) {
 				r.log("X: " + step[1] + " Y " + step[0]);
 			}*/
+		}
+		if(me.turn % 10 == 0){
+			endLocs = new boolean[r.map.length][r.map[0].length];
+			endLocs[toGo[0]][toGo[1]] = true;
+			Rmap = Pathing.rangeBFS(r,endLocs,4,blockers,new Task());
+			endLocs = new boolean[r.map.length][r.map[0].length];
+			endLocs[castle[0]][castle[1]] = true;
+			Cmap = Pathing.rangeBFS(r,endLocs,4,blockers,new Task());
+			//Pathing.printMap(Rmap,r);
 		}
 		if (!deposit){
 			LinkedList<Integer[]> enemies = new LinkedList<Integer[]>();
@@ -85,6 +95,34 @@ public class PilgrimBot extends Bot{
 			}
 			if(me.fuel == 100 || me.karbonite == 20){
 				deposit = true;
+				boolean dRange = false;
+				for(Robot other : visible){
+					if(other.team == me.team && (other.unit == 0 || other.unit == 1) && Pathing.distance(other.x,other.y,me.x,me.y) <= 25){
+						dRange = true;
+						castle[0] = other.y;
+						castle[1] = other.x;
+						endLocs = new boolean[r.map.length][r.map[0].length];
+						endLocs[castle[0]][castle[1]] = true;
+						Cmap = Pathing.rangeBFS(r,endLocs,4,blockers,new Task());
+					}
+				}
+				if(!dRange && r.karbonite >= 50 && r.fuel >=200){//make church if no church/castle in range
+					for(int dy = -1; dy <= 1; dy++){
+						for(int dx = -1; dx <= 1; dx++){
+							int xadj = me.x + dx;
+							int yadj = me.y + dy;
+							if(!blockers[yadj][xadj] && !r.getFuelMap()[yadj][xadj] && !r.getKarboniteMap()[yadj][xadj] && r.map[yadj][xadj]){
+								castle[0] = yadj;
+								castle[1] = xadj;
+								endLocs = new boolean[r.map.length][r.map[0].length];
+								endLocs[castle[0]][castle[1]] = true;
+								Cmap = Pathing.rangeBFS(r,endLocs,4,blockers,new Task());
+								return r.buildUnit(1,dx,dy);
+							}
+
+						}
+					}
+				}
 			}
 		}
 
@@ -97,6 +135,7 @@ public class PilgrimBot extends Bot{
 			return r.mine();
 		}
 		if(deposit){
+
 			Integer[] move = nextMove(Cmap);
 			return r.move(move[1] - me.x, move[0] -me.y);
 		}

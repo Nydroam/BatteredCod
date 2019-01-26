@@ -37,6 +37,7 @@ public class Bot{
 
 	public AttackAction attack(){
 		Robot target = null;
+		int min = 9999;
 		for(Robot other : r.getVisibleRobots()){
 			if(r.isVisible(other) && other.team != me.team){
 				int dist = Pathing.distance(other.x,other.y,me.x,me.y);
@@ -44,11 +45,13 @@ public class Bot{
 				if(me.unit == 4 || me.unit == 0)
 					range = 64;
 				if(dist <= range){
-					if(target == null || target.unit != 2 || other.unit != 2)
-						target = other;
+					if(target == null || target.unit != 2 || other.unit != 2){
+						if(dist < min && !(me.unit == 4 && dist < 16)){
+							target = other;
+							min = dist;
+						}
+					}
 
-					if(me.unit == 4 && dist < 16)
-						target = null;
 
 				}
 			}

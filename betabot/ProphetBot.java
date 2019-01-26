@@ -18,9 +18,10 @@ public class ProphetBot extends Bot{
 	}
 	public void calcMap(){
 		endLocs = new boolean[r.map.length][r.map[0].length];
-		for( Integer[] c : targets){
+		/*for( Integer[] c : targets){
 			endLocs[c[0]][c[1]] = true;
-			}
+		}*/
+		endLocs[toGo[0]][toGo[1]] = true;
 		Rmap = Pathing.rangeBFS(r,endLocs,4,blockers,new Task());
 		//Pathing.printMap(Rmap,r);
 	}
@@ -34,6 +35,8 @@ public class ProphetBot extends Bot{
 			int sig = signal % 10000;
 			int ycor = sig % 100;
 			int xcor = (int)Math.floor((sig - ycor)/100);
+			toGo[0] = ycor;
+			toGo[1] = xcor;
 			targ[1] = xcor;
 			targ[0] = ycor;
 			boolean have = false;
@@ -86,7 +89,7 @@ public class ProphetBot extends Bot{
 					break;
 				}
 			}
-			calcMap();
+			//calcMap();
 		}
 		castleBot = r.getRobot(castleId);
 		if (castleBot != null && r.isRadioing(castleBot) && strat != 2){
@@ -97,7 +100,7 @@ public class ProphetBot extends Bot{
 				//r.log("ATTTCK");
 			}
 		}
-		for(int i = 0; i < targets.size(); i++){
+		/*for(int i = 0; i < targets.size(); i++){
 			Integer[] c = targets.get(i);
 			int dist = Pathing.distance(c[1],c[0],me.x,me.y);
 			if (dist <= 8){
@@ -114,12 +117,15 @@ public class ProphetBot extends Bot{
 					i--;
 				}
 			}
-		}
+		}*/
 		boolean enemySeen = false;
 		boolean minRange = false;
 		LinkedList<Integer[]> enemies = new LinkedList<Integer[]>();
+		boolean preacher = false;
 		for(Robot other : visible){
 			if(other.team != me.team){
+				if(other.unit == 5)
+					preacher = true;
 				enemySeen = true;
 				int dist = Pathing.distance(other.x,other.y,me.x,me.y);
 				Integer[] enemyCoord = new Integer[2];
@@ -133,10 +139,13 @@ public class ProphetBot extends Bot{
 				}
 			}
 		}
-		if(minRange){ //retret in opposite direction of enemy units
+		
+		if(minRange || (enemySeen && Pathing.distance(castle[1],castle[0],me.x,me.y) <= 2)){ //retret in opposite direction of enemy units
 			//Integer[] move = nextMove(Cmap);
 			//Action a = r.move(move[1] - me.x, move[0] -me.y);
+
 			Integer[] move = Pathing.retreatMove(r,me.x,me.y,enemies,4,blockers);
+
 			Action a = r.move(move[1], move[0]);
 			if(!a.equals(null))
 				return a; 
@@ -147,16 +156,12 @@ public class ProphetBot extends Bot{
 				return atk;
 		}
 
-		if(me.turn <= 4 || strat == 2 || r.fuelMap[me.y][me.x] || r.karboniteMap[me.y][me.x]){//forward march
+		if( !(me.x == toGo[1] && me.y == toGo[0]) && strat == 2 || r.fuelMap[me.y][me.x] || r.karboniteMap[me.y][me.x]){//forward march
 			//r.log("MARCHING forward");
 			Integer[] move = nextMove(Rmap);
 			Action a = r.move(move[1] - me.x, move[0] -me.y);
 			if(!a.equals(null))
 				return a; 
-		}
-		if(attack){
-			Integer[] move = nextMove(Rmap);
-			return r.move(move[1] - me.x, move[0] -me.y);
 		}
 		return null;
 	}

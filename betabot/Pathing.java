@@ -181,19 +181,20 @@ public class Pathing{
 					if(coor[2]==1)
 						nodes.add(coor);
 					dirMap[coorY][coorX] = step + 1;
+					boolean[][] karbMap = r.getKarboniteMap();
+					boolean[][] fuelMap = r.getFuelMap();
 					if(t.markKarb && coor[3] == 1){
-						boolean[][] karbMap = r.getKarboniteMap();
+						
 						if(karbMap[coorY][coorX]){
 							t.karbList.add(new Resource(coorX,coorY,step));
 						}
 					}
 					if(t.markFuel && coor[3] == 1){
-						boolean[][] fuelMap = r.getFuelMap();
 						if(fuelMap[coorY][coorX]){
 							t.fuelList.add(new Resource(coorX,coorY,step + 1));
 						}
 					}
-					if(lattice[coorY][coorX]&& coor[3] == 1){
+					if(lattice[coorY][coorX]&& coor[3] == 1 && !fuelMap[coorY][coorX] && !karbMap[coorY][coorX] && step + 1 > 1){
 						Integer[] l = new Integer[4];
 						l[0] = coorY;
 						l[1] = coorX;
@@ -372,10 +373,12 @@ public class Pathing{
 				int yCor = myY+y;
 				if(dist <= range && checkBounds(r, xCor, yCor, blockers)){
 					int newDist = 0;
-					for(Integer[] enemyCoord: enemies){
+					for(int i = 0; i < enemies.size(); i++){
+						Integer[] enemyCoord = enemies.get(i);
 						newDist+=distance(xCor,yCor,enemyCoord[1],enemyCoord[0]);
-						//r.log("En X: " + enemyCoord[1] + " Y: " + enemyCoord[0]);
+						r.log("En X: " + (myX + x) + " Y: " + (myY + y));
 					}
+					r.log("Dist: " + newDist);
 					if (newDist > maxDist) {
 						maxDist = newDist;
 						move[1] = x;

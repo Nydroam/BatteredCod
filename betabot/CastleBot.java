@@ -11,15 +11,16 @@ public class CastleBot extends Bot{
 	LinkedList<Integer[]> lattice;
 	int[][] resMap;
 	Resource allocate;
-	Integer[] target;
+	Integer[] allocLat;
+	
 	
 	int signalCount;
 	public CastleBot(MyRobot r){
 		super(r);
 	}
 	public Action act(){
+
 		Robot [] visible = r.getVisibleRobots();
-		target = null;
 		r.log("Turn: " + me.turn);
 		/*if(!aFuelList.equals(null) && me.id==2533)
 			for(Resource res: aFuelList)
@@ -40,8 +41,6 @@ public class CastleBot extends Bot{
 			myCor[0] = me.y;
 			myCor[1] = me.x;
 			myCastles.add(myCor);
-
-
 			//DETERMINING NUMBER OF CASTLES ==========================
 			//loop through visible robots and check their castletalk to determine which castle this one is
 			boolean firstCastle = true;
@@ -59,6 +58,7 @@ public class CastleBot extends Bot{
 					coor[1] = other.castle_talk % 100 - 1;
 					coor[2] = other.id;
 					myCastles.add(coor);
+
 				}
 				if(!r.isVisible(other))
 					count++;
@@ -89,7 +89,13 @@ public class CastleBot extends Bot{
 			aKarbList = new LinkedList<Resource>();
 			aFuelList = new LinkedList<Resource>();
 			lattice = t.lattice;
-			//r.log("Turn 1 resources1");
+
+			if(numCastles == 1){
+				int[][] printLattice = new int[r.map.length][r.map[0].length];
+					for(Integer[] l : lattice)
+						printLattice[l[0]][l[1]] = l[3];
+					Pathing.printMap(printLattice,r);
+			}
 		}
 		else if( me.turn <= 3){ //TURN 2-3 =================================================================================================
 			for(Robot other : visible){
@@ -116,7 +122,15 @@ public class CastleBot extends Bot{
 			}
 			
 		}
-
+		if(!allocLat.equals(null)){//match a ranger with a destination
+			for(Robot other:visible){
+				if(other.unit > 2 && Pathing.distance(other.x,other.y,me.x,me.y) <=36 && other.team == me.team && other.turn == 1){
+					allocLat[2] = other.id;
+					break;
+				}
+			}
+			allocLat = null;
+		}
 		if(!allocate.equals(null) && !aKarbList.equals(null)){//match a workerid with a resource
 			LinkedList<Resource> resList;
 			LinkedList<Resource> otherList;
@@ -153,13 +167,7 @@ public class CastleBot extends Bot{
 		//broadcast MY castle y coordinate
 			if(me.turn == 2){
 				r.castleTalk(me.y + 1);
-				if(r.karbonite >= 25){
-				Action a = spawnSoldier(4);
-				if(!a.equals(null)){//spawn defensive soldier on turn 2
-			
-					return a;
-				}
-				}
+				
 			}
 
 		if(!fullyInit){
@@ -192,14 +200,19 @@ public class CastleBot extends Bot{
 				lattice = t.lattice;
 					int[][] printLattice = new int[r.map.length][r.map[0].length];
 					for(Integer[] l : lattice)
-						printLattice[l[0]][l[1]] = l[2];
+						printLattice[l[0]][l[1]] = l[3];
 					Pathing.printMap(printLattice,r);
+					/*
+					if(r.karbonite >= 25 && r.fuel >= 50 ) {
+				Action a = spawnSoldier(4);
+				if(!a.equals(null)){
+					return a;
 				}
+				}*/
+				
+			}
 			}
 		}
-		Action atk = attack();
-		if(me.turn!=100&&!atk.equals(null))
-			return atk;
 		if(fullyInit){//FULLY INITIALIZED, START DOING STUFF ====================================================================================
 			
 			//replacing dead workers
@@ -217,7 +230,13 @@ public class CastleBot extends Bot{
 							res.worker = -1;
 					}
 				}
-			if(me.turn%75 == 0 && me.turn > 0){
+				for(Integer[] c : lattice){
+					if(c[2] != -1){
+						if(r.getRobot(c[2]).equals(null))
+							c[2] = -1;
+					}
+				}
+			/*if(me.turn%75 == 0 && me.turn > 0){
 				if(numCastles == 1){
 					Integer[] enemy = enemyCastles.get(0);
 					r.signal(20000 + enemy[1] * 100 + enemy[0],100);
@@ -234,23 +253,54 @@ public class CastleBot extends Bot{
 				//r.log("Sending Signal: " + s);
 				r.signal(s,100);
 				signalCount--;
+			}*/
+			boolean preacher = false;
+			boolean enemySighted = false;
+			int enemyCount = 0;
+			int allyCount = 0;
+			for(Robot other : visible){
+				if(other.team != me.team){
+					enemySighted = true;
+					enemyCount++;
+					if(other.unit == 5 && Pathing.distance(me.x,me.y,other.x,other.y) <= 16){
+						preacher = true;
+						break;
+					}
+					
+				}else if(other.unit > 2)
+					allyCount ++;
 			}
-			if(r.karbonite >= 25 && r.fuel >= 50 && me.turn > 4 ) {
-				Action a = spawnSoldier(4);
-				if(!a.equals(null)){//spawn defensive soldier on turn 2
+			if(r.karbonite >= 25 && r.fuel >= 50 && !preacher) {
+				Action a = null;
+				if(enemySighted && allyCount < enemyCount){
+					if(r.fuel > 200){
+						a = spawnSoldier(4);
+					}
+				}
+				else if(me.turn % 10 == 0 && me.turn >= 25)
+					a = spawnSoldier(4);
+				//else if(numCastles == 1 && me.turn > 1 && me.turn < 10)
+					//a = spawnSoldier(4);
+				if(!a.equals(null)){
 					return a;
 				}
 			}
+
+			if(enemySighted && r.fuel >= 10){
+				Action a = attack();
+				if(!a.equals(null))
+					return a;
+			}
 			
 		}
-
-		if(signalCount == -1 && r.karbonite >= 10 && r.fuel >= 50 && (me.turn == 1 || fullyInit)) {
+		if( r.karbonite >= 10 && r.fuel >= 50 && (me.turn == 1 || fullyInit)) {
+		
 			boolean deadFuel = false;
 			for(Resource res: aFuelList){
 				if(res.worker == -1)
 					deadFuel = true;
 			}
-			if(me.turn > 1 && !fuelList.equals(null) && (fuelList.size() > 0 || deadFuel)) {
+			if(me.turn > 20 && !fuelList.equals(null) && (fuelList.size() > 0 || deadFuel)) {
 				//r.log("FUELED+============");
 					BuildAction a = spawnWorker(false);
 					if(!a.equals(null)){
@@ -295,13 +345,24 @@ public class CastleBot extends Bot{
 	}
 
 	public BuildAction spawnSoldier(int unit){
-		if(target == null)
-			target = enemyCastles.get(0);
+		Integer[] target;
+		for(Integer[] c : lattice){
+			if(c[2] == -1){
+				allocLat = c;
+				target = c;
+				break;
+			}
+		}
+		if(target.equals(null))
+			return null;
 
 		LinkedList<Integer[]> path = Pathing.rangeAST(r,me.x,me.y,target[1],target[0],2,blockers);
 		if (!path.equals(null) && path.size()>0) {
 		Integer[] coord = path.poll();
-		
+			int s = 20000;
+			s += target[1] * 100 + target[0];
+			//r.log("Lattice (X, Y): " + target[1] + ", " + target[0]);
+			r.signal(s,2);
 			return r.buildUnit(unit,coord[1],coord[0]);
 		}
 		return null;
@@ -313,14 +374,28 @@ public class CastleBot extends Bot{
 		else
 			resList = aFuelList;
 		boolean found = false;
-		for(Resource res: resList){
+		for(int i = 0; i < resList.size(); i++){
+			Resource res = resList.get(i);
+			if(res.worker == -1){
+				if(res.priority > (int)Math.floor(r.map.length/4)){
+					resList.remove(i);
+					i--;
+				}else{
+					allocate = res;
+					allocate.isKarb = karb;
+					found = true;
+					break;
+				}
+			}
+		}
+		/*for(Resource res: resList){
 			if(res.worker == -1){
 				allocate = res;
 				allocate.isKarb = karb;
 				found = true;
 				break;
 			}
-		}
+		}*/
 		if(!found){
 			LinkedList<Resource> oldList;
 			if(karb)
@@ -330,10 +405,10 @@ public class CastleBot extends Bot{
 			if(oldList.size()>0){
 				allocate = oldList.poll();
 				allocate.isKarb = karb;
-				if(allocate.priority > 5){
+				/*if(allocate.priority > 5){
 					allocate = null;
 					return null;
-				}
+				}*/
 				for(Integer[] c : enemyCastles){
 
 					if(Pathing.distance(c[1],c[0],allocate.x,allocate.y)<=100 ){
