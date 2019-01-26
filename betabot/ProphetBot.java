@@ -94,7 +94,6 @@ public class ProphetBot extends Bot{
 		castleBot = r.getRobot(castleId);
 		if (castleBot != null && r.isRadioing(castleBot) && strat != 2){
 			int sig = castleBot.signal;
-			//r.log("Signal: " + sig);
 			extractSignal(sig);
 			if(strat == 2){
 				//r.log("ATTTCK");
@@ -139,7 +138,6 @@ public class ProphetBot extends Bot{
 				}
 			}
 		}
-		
 		if(minRange || (enemySeen && Pathing.distance(castle[1],castle[0],me.x,me.y) <= 2)){ //retret in opposite direction of enemy units
 			//Integer[] move = nextMove(Cmap);
 			//Action a = r.move(move[1] - me.x, move[0] -me.y);
@@ -157,7 +155,7 @@ public class ProphetBot extends Bot{
 		}
 
 		if( !(me.x == toGo[1] && me.y == toGo[0]) && strat == 2 || r.fuelMap[me.y][me.x] || r.karboniteMap[me.y][me.x]){//forward march
-			//r.log("MARCHING forward");
+		
 			Integer[] move = nextMove(Rmap);
 			Action a = r.move(move[1] - me.x, move[0] -me.y);
 			if(!a.equals(null))

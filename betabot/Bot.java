@@ -14,8 +14,10 @@ public class Bot{
 	LinkedList<Integer[]> myCastles;
 
 	int symmetry;
+	int currTarget;
 
 	public Bot(MyRobot r){
+		currTarget = -1;
 		update(r);
 		//create checkerboard pattern of TF
 
@@ -37,6 +39,9 @@ public class Bot{
 
 	public AttackAction attack(){
 		Robot target = null;
+		if(currTarget == -1 || r.getRobot(currTarget).equals(null)){
+		
+
 		int min = 9999;
 		for(Robot other : r.getVisibleRobots()){
 			if(r.isVisible(other) && other.team != me.team){
@@ -45,19 +50,25 @@ public class Bot{
 				if(me.unit == 4 || me.unit == 0)
 					range = 64;
 				if(dist <= range){
-					if(target == null || target.unit != 2 || other.unit != 2){
+					if(target == null || target.unit == 2 || other.unit != 2){
 						if(dist < min && !(me.unit == 4 && dist < 16)){
 							target = other;
 							min = dist;
+							currTarget = other.id;	
 						}
 					}
 
 
 				}
 			}
+
 		}
+	}
+		else
+			target = r.getRobot(currTarget);
 		if(target.equals(null))
 			return null;
 		return r.attack(target.x-me.x,target.y-me.y);
+		
 	}
 }

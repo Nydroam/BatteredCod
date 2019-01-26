@@ -164,6 +164,24 @@ public class Pathing{
 				}
 			}
 		}
+		boolean[][] rMap = new boolean[r.map.length][r.map[0].length];
+		
+		for(int tempY = 0; tempY < rMap.length; tempY++){
+			for(int tempX = 0; tempX < rMap[0].length; tempX++){
+				if(r.getFuelMap()[tempY][tempX] || r.getKarboniteMap()[tempY][tempX])
+					rMap[tempY][tempX] = true;
+			}
+		}
+
+		boolean[][] karbMap = new boolean[r.map.length][r.map[0].length];
+		boolean[][] fuelMap = new boolean[r.map.length][r.map[0].length];
+		for(int tempY = 0; tempY < rMap.length; tempY++){
+			for(int tempX = 0; tempX < rMap[0].length; tempX++){
+				karbMap[tempY][tempX] = r.getKarboniteMap()[tempY][tempX];
+				fuelMap[tempY][tempX] = r.getFuelMap()[tempY][tempX];
+			}
+		}
+		
 		while(!nodes.isEmpty()){
 			Integer[] curr = nodes.poll();
 			int currY = curr[0];
@@ -171,6 +189,8 @@ public class Pathing{
 
 			LinkedList<Integer[]> nextList = findRange(r,currX,currY,range,blockers,dirMap);
 			int step = dirMap[currY][currX];
+			
+
 			while(!nextList.isEmpty()){
 				Integer[] coor = nextList.poll();
 				int coorY = coor[0];
@@ -181,8 +201,7 @@ public class Pathing{
 					if(coor[2]==1)
 						nodes.add(coor);
 					dirMap[coorY][coorX] = step + 1;
-					boolean[][] karbMap = r.getKarboniteMap();
-					boolean[][] fuelMap = r.getFuelMap();
+					
 					if(t.markKarb && coor[3] == 1){
 						
 						if(karbMap[coorY][coorX]){
@@ -194,7 +213,25 @@ public class Pathing{
 							t.fuelList.add(new Resource(coorX,coorY,step + 1));
 						}
 					}
-					if(lattice[coorY][coorX]&& coor[3] == 1 && !fuelMap[coorY][coorX] && !karbMap[coorY][coorX] && step + 1 > 1){
+					int s = 6;
+					if((fuelMap[coorY][coorX] || karbMap[coorY][coorX]) && coor[3] == 1 && distance(r.me.x,r.me.y,coorX,coorY) >= s*s && r.me.unit == 0){
+						//r.log("works");
+						
+						for(int dy = -1*s; dy <= s; dy++){
+							for(int dx = -1*s; dx <= s; dx++){
+								int checkX = coorX + dx;
+								int checkY = coorY + dy;
+								if(distance(coorX,coorY,checkX,checkY) <= s*s && checkBounds(r,checkX,checkY,blockers)){
+									//r.log("fm" + fuelMap);
+									fuelMap[checkY][checkX] = false;
+									//r.log("km" + fuelMap);
+									karbMap[checkY][checkX] = false;
+								}
+							}
+						}
+						//r.log("works2");
+					}
+					if(lattice[coorY][coorX]&& coor[3] == 1 && !rMap[coorY][coorX] && Pathing.distance(r.me.x,r.me.y,coorX,coorY) > 2){
 						Integer[] l = new Integer[4];
 						l[0] = coorY;
 						l[1] = coorX;
@@ -375,9 +412,9 @@ public class Pathing{
 					for(int i = 0; i < enemies.size(); i++){
 						Integer[] enemyCoord = enemies.get(i);
 						newDist+=distance(xCor,yCor,enemyCoord[1],enemyCoord[0]);
-						r.log("En X: " + (myX + x) + " Y: " + (myY + y));
+						//r.log("En X: " + (myX + x) + " Y: " + (myY + y));
 					}
-					r.log("Dist: " + newDist);
+					//r.log("Dist: " + newDist);
 					if (newDist > maxDist) {
 						maxDist = newDist;
 						move[1] = x;
