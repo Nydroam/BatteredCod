@@ -57,11 +57,6 @@ public class PilgrimBot extends Bot{
 			endLocs = new boolean[r.map.length][r.map[0].length];
 			endLocs[castle[0]][castle[1]] = true;
 			Cmap = Pathing.rangeBFS(r,endLocs,4,blockers,new Task());
-			//Pathing.printMap(Rmap,r);
-			/*LinkedList<Integer[]> path = Pathing.rangeAST(r,me.x,me.y,toGo[1],toGo[0],4,blockers);
-			for(Integer[] step: path) {
-				r.log("X: " + step[1] + " Y " + step[0]);
-			}*/
 		}
 		if(me.turn % 10 == 0){
 			endLocs = new boolean[r.map.length][r.map[0].length];
@@ -75,7 +70,7 @@ public class PilgrimBot extends Bot{
 		if (!deposit){
 			LinkedList<Integer[]> enemies = new LinkedList<Integer[]>();
 			for(Robot other: visible){
-				if (other.team != me.team && other.unit != 2){
+				if (other.team != me.team && other.unit != 1 && other.unit != 2){
 					if (me.karbonite > 0 || me.fuel > 0) {
 						deposit = true;
 						break;
@@ -95,6 +90,16 @@ public class PilgrimBot extends Bot{
 			}
 			if(me.fuel == 100 || me.karbonite == 20){
 				deposit = true;
+				}
+		}
+
+		if (Pathing.distance(me.x,me.y,castle[1],castle[0])<=2 && deposit){
+			deposit = false;
+			return r.give(castle[1]-me.x,castle[0]-me.y,me.karbonite,me.fuel);
+			
+		}
+		else if (me.x == toGo[1] && me.y == toGo[0] && !deposit){
+			if (me.karbonite == 0 && me.fuel == 0) {
 				boolean dRange = false;
 				for(Robot other : visible){
 					if(other.team == me.team && (other.unit == 0 || other.unit == 1) && Pathing.distance(other.x,other.y,me.x,me.y) <= 25){
@@ -107,31 +112,63 @@ public class PilgrimBot extends Bot{
 					}
 				}
 				if(!dRange && r.karbonite >= 50 && r.fuel >=200){//make church if no church/castle in range
-					for(int dy = -1; dy <= 1; dy++){
+					int range = 16; //range to check for distance to resources
+					int steps = (int)Math.floor(Math.sqrt(range));
+					LinkedList<Integer[]> churchTile = new LinkedList<Integer[]>();
+					int maxResources = 0;
+					int minDist = 9999;
+					Integer[] toBuild = new Integer[2];
+					for(int dy = -1; dy <= 1; dy++){ //record all adjacent tiles to check for distance to resources
 						for(int dx = -1; dx <= 1; dx++){
 							int xadj = me.x + dx;
 							int yadj = me.y + dy;
-							if(!blockers[yadj][xadj] && !r.getFuelMap()[yadj][xadj] && !r.getKarboniteMap()[yadj][xadj] && r.map[yadj][xadj]){
-								castle[0] = yadj;
-								castle[1] = xadj;
-								endLocs = new boolean[r.map.length][r.map[0].length];
-								endLocs[castle[0]][castle[1]] = true;
-								Cmap = Pathing.rangeBFS(r,endLocs,4,blockers,new Task());
-								return r.buildUnit(1,dx,dy);
+							if(r.map[yadj][xadj] && !blockers[yadj][xadj] && !r.getFuelMap()[yadj][xadj] && !r.getKarboniteMap()[yadj][xadj]){
+								Integer[] tile = new Integer[2];
+								tile[1] = dx;
+								tile[0] = dy;
+								churchTile.add(tile);
 							}
-
 						}
 					}
+					for(Integer[] tile : churchTile) { //check each adjacent tile for distance to resources
+						int numResources = 0;
+						int newDist = 0;
+						for(int y = 0 - steps; y <= steps; y++){
+							for(int x = 0 - steps; x <= steps; x++){
+								int dist = Pathing.distance(0,0,x,y);
+								int xCor = tile[1] + x + me.x;
+								int yCor = tile[0] + y + me.y;
+								if(dist <= range && r.map[yCor][xCor] && !blockers[yCor][xCor] && (r.getFuelMap()[yCor][xCor] || r.getKarboniteMap()[yCor][xCor])){
+									numResources += 1;
+									newDist += Pathing.distance(me.x+tile[1],me.y+tile[0],xCor,yCor);
+								}
+							}
+						}
+						if (numResources > maxResources) {
+							maxResources = numResources;
+							minDist = newDist;
+							castle[1] = me.x+tile[1];
+							castle[0] = me.y+tile[0];
+							toBuild[1] = tile[1];
+							toBuild[0] = tile[0];
+						}
+						if (numResources == maxResources) {
+							if (newDist < minDist) {
+								minDist = newDist;
+								castle[1] = me.x+tile[1];
+								castle[0] = me.y+tile[0];
+								toBuild[1] = tile[1];
+								toBuild[0] = tile[0];
+							}
+						}
+						
+					}
+					endLocs = new boolean[r.map.length][r.map[0].length];
+					endLocs[castle[0]][castle[1]] = true;
+					Cmap = Pathing.rangeBFS(r,endLocs,4,blockers,new Task());
+					return r.buildUnit(1,toBuild[1],toBuild[0]);
 				}
 			}
-		}
-
-		if (Pathing.distance(me.x,me.y,castle[1],castle[0])<=2 && deposit){
-			deposit = false;
-			return r.give(castle[1]-me.x,castle[0]-me.y,me.karbonite,me.fuel);
-			
-		}
-		else if (me.x == toGo[1] && me.y == toGo[0] && !deposit){
 			return r.mine();
 		}
 		if(deposit){
@@ -141,6 +178,9 @@ public class PilgrimBot extends Bot{
 		}
 		else{
 			Integer[] move = nextMove(Rmap);
+			if (Rmap[move[0]][move[1]] == Rmap[me.y][me.x]) {
+				return null;
+			}
 			return r.move(move[1] - me.x, move[0] -me.y);
 		}
 	}
