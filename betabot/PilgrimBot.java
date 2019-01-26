@@ -148,7 +148,7 @@ public class PilgrimBot extends Bot{
 						for(int dx = -1; dx <= 1; dx++){
 							int xadj = me.x + dx;
 							int yadj = me.y + dy;
-							if(r.map[yadj][xadj] && !blockers[yadj][xadj] && !r.getFuelMap()[yadj][xadj] && !r.getKarboniteMap()[yadj][xadj]){
+							if(Pathing.checkBounds(r,xadj,yadj,blockers) && !r.getFuelMap()[yadj][xadj] && !r.getKarboniteMap()[yadj][xadj]){
 								Integer[] tile = new Integer[2];
 								tile[1] = dx;
 								tile[0] = dy;
@@ -164,7 +164,7 @@ public class PilgrimBot extends Bot{
 								int dist = Pathing.distance(0,0,x,y);
 								int xCor = tile[1] + x + me.x;
 								int yCor = tile[0] + y + me.y;
-								if(dist <= range && r.map[yCor][xCor] && !blockers[yCor][xCor] && (r.getFuelMap()[yCor][xCor] || r.getKarboniteMap()[yCor][xCor])){
+								if(dist <= range && Pathing.checkBounds(r,xCor,yCor,blockers) && (r.getFuelMap()[yCor][xCor] || r.getKarboniteMap()[yCor][xCor])){
 									numResources += 1;
 									newDist += Pathing.distance(me.x+tile[1],me.y+tile[0],xCor,yCor);
 								}
