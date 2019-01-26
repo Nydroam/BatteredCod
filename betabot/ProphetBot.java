@@ -79,13 +79,14 @@ public class ProphetBot extends Bot{
 			toGo = new Integer[2];
 			castle = new Integer[2];	
 			for(Robot c : visible){
-				if (c.unit == 0 && c.team == me.team){
+				if (c.unit <= 1 && c.team == me.team){
 					castleId = c.id;
 					castle[1] = c.x;
 					castle[0] = c.y;
 					int symmetry = Logistics.symmetry(r.map,r);
-					for(Integer[] coor:Logistics.findOpposite(r,castle[1],castle[0],symmetry))
-						targets.add(coor);
+					if(c.unit == 0)
+						for(Integer[] coor:Logistics.findOpposite(r,castle[1],castle[0],symmetry))
+							targets.add(coor);
 					break;
 				}
 			}
