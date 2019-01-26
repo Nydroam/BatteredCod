@@ -132,7 +132,7 @@ public class ChurchBot extends Bot{
 				}else if(other.unit > 2)
 					allyCount ++;
 			}
-			/*if(r.karbonite >= 25 && r.fuel >= 50 && !preacher) {
+			if(r.karbonite >= 25 && r.fuel >= 50 && !preacher) {
 				Action a = null;
 				if(enemySighted && allyCount < enemyCount){
 					
@@ -141,14 +141,15 @@ public class ChurchBot extends Bot{
 					
 					}
 				}
-				else if(me.turn % 10 == 0 && me.turn >= 25)
+				else if(me.turn % 5 == 0){
 					a = spawnSoldier(4,enemies);
+				}
 				//else if(numCastles == 1 && me.turn > 1 && me.turn < 10)
 					//a = spawnSoldier(4);
 				if(!a.equals(null)){
 					return a;
 				}
-			}*/
+			}
 
 			if(r.karbonite >= 10 && r.fuel >= 50){
 				
