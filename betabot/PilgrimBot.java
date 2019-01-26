@@ -43,8 +43,9 @@ public class PilgrimBot extends Bot{
 			castle = new Integer[2];
 			symmetry = Logistics.symmetry(r.map,r);
 			for(Robot c : visible){
-				if (c.unit == 0 && r.isRadioing(c)){
-					enemyCastles=(Logistics.findOpposite(r,c.x,c.y,symmetry));
+				if (c.unit <= 1  && r.isRadioing(c)){
+					if(c.unit == 0)
+						enemyCastles=(Logistics.findOpposite(r,c.x,c.y,symmetry));
 					int sig = c.signal;
 					castle[1] = c.x;
 					castle[0] = c.y;
@@ -72,7 +73,7 @@ public class PilgrimBot extends Bot{
 			Cmap = Pathing.rangeBFS(r,endLocs,4,blockers,new Task());
 		}
 
-		
+
 		if(enemyCastles != null){
 			for(int y = 0; y < blockers.length; y++){
 				for(int x = 0; x < blockers[0].length; x++){
@@ -137,7 +138,7 @@ public class PilgrimBot extends Bot{
 					}
 				}
 				if(!dRange && r.karbonite >= 50 && r.fuel >=200){//make church if no church/castle in range
-					int range = 16; //range to check for distance to resources
+					int range = 36; //range to check for distance to resources
 					int steps = (int)Math.floor(Math.sqrt(range));
 					LinkedList<Integer[]> churchTile = new LinkedList<Integer[]>();
 					int maxResources = 0;

@@ -448,7 +448,7 @@ public class CastleBot extends Bot{
 				}*/
 				for(Integer[] c : enemyCastles){
 
-					if(Pathing.distance(c[1],c[0],allocate.x,allocate.y)<=100 ){
+					if(Pathing.distance(c[1],c[0],allocate.x,allocate.y)<=144 ){
 						//oldList.add(allocate);
 						allocate = null;
 						return null;
