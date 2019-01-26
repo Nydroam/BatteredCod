@@ -127,14 +127,19 @@ public class PilgrimBot extends Bot{
 		else if (me.x == toGo[1] && me.y == toGo[0] && !deposit){
 			if (me.karbonite == 0 && me.fuel == 0) {
 				boolean dRange = false;
+				int castleDist = 9999;
 				for(Robot other : visible){
-					if(other.team == me.team && (other.unit == 0 || other.unit == 1) && Pathing.distance(other.x,other.y,me.x,me.y) <= 25){
-						dRange = true;
-						castle[0] = other.y;
-						castle[1] = other.x;
-						endLocs = new boolean[r.map.length][r.map[0].length];
-						endLocs[castle[0]][castle[1]] = true;
-						Cmap = Pathing.rangeBFS(r,endLocs,4,blockers,new Task());
+					if(other.team == me.team && (other.unit == 0 || other.unit == 1)){
+						int newCastleDist = Pathing.distance(other.x,other.y,me.x,me.y);
+						if (newCastleDist <=36 && newCastleDist < castleDist) {
+							castleDist = newCastleDist;
+							dRange = true;
+							castle[0] = other.y;
+							castle[1] = other.x;
+							endLocs = new boolean[r.map.length][r.map[0].length];
+							endLocs[castle[0]][castle[1]] = true;
+							Cmap = Pathing.rangeBFS(r,endLocs,4,blockers,new Task());
+						}
 					}
 				}
 				if(!dRange && r.karbonite >= 50 && r.fuel >=200){//make church if no church/castle in range
