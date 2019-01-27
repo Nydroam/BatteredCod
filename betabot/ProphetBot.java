@@ -39,6 +39,8 @@ public class ProphetBot extends Bot{
 		int ycor = sig % 100;
 		int xcor = (int)Math.floor((sig - ycor)/100);
 		if(strat == 0){
+			if(st == 2)
+				even = true;
 			strat = st;
 			toGo[0] = ycor;
 			toGo[1] = xcor;
@@ -98,6 +100,7 @@ public class ProphetBot extends Bot{
 			}
 		}
 	}
+
 	public Integer[] nextMove(int[][] map){
 		int min = 9999;
 		Integer[] curr;
@@ -136,7 +139,10 @@ public class ProphetBot extends Bot{
 			}
 			//calcMap();
 		}
-
+		else
+			even = !even;
+	
+	
 		for(Robot other : visible){
 			if(other.x == castle[1] && other.y == castle[0] && r.isRadioing(other)){
 				int sig = other.signal;
@@ -144,6 +150,11 @@ public class ProphetBot extends Bot{
 					extractSig(sig);
 			}
 		}
+
+		if(even)
+			r.castleTalk(toGo[1]);
+		else
+			r.castleTalk(toGo[0]);
 		/*castleBot = r.getRobot(castleId);
 		if (castleBot != null && r.isRadioing(castleBot) && strat != 2){
 			int sig = castleBot.signal;
@@ -178,7 +189,7 @@ public class ProphetBot extends Bot{
 		boolean preacher = false;
 		for(Robot other : visible){
 			if(r.isVisible(other)&&other.team != me.team){
-				if(other.unit == 5 && Pathing.distance(other.x,other.y,me.x,me.y)<=26)
+				if(other.unit == 5 )
 					preacher = true;
 				enemySeen = true;
 				int dist = Pathing.distance(other.x,other.y,me.x,me.y);
@@ -187,7 +198,7 @@ public class ProphetBot extends Bot{
 				enemyCoord[0] = other.y;
 				enemies.add(enemyCoord);
 				r.log("Enemy At: " + other.x + "," + other.y);
-				if(dist <= 16) {
+				if(dist <= 16 || (preacher && Pathing.distance(other.x,other.y,me.x,me.y)<25)) {
 					minRange = true;
 					r.log("Start Running");
 				}

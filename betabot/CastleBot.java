@@ -41,6 +41,7 @@ public class CastleBot extends Bot{
 			Integer[] myCor = new Integer[3];
 			myCor[0] = me.y;
 			myCor[1] = me.x;
+			myCor[2] = me.id;
 			myCastles.add(myCor);
 			//DETERMINING NUMBER OF CASTLES ==========================
 			//loop through visible robots and check their castletalk to determine which castle this one is
@@ -235,7 +236,12 @@ public class CastleBot extends Bot{
 			}
 		}
 		if(fullyInit){//FULLY INITIALIZED, START DOING STUFF ====================================================================================
-			
+			for(Robot other: visible){
+				if(other.team == me.team && other.id != me.id){
+					if(other.castle_talk == 200)
+						r.signal(7777,25);
+				}
+			}
 			//replacing dead workers
 				for(Resource res : aKarbList){
 					if(res.worker != -1 && !res.equals(allocate)){
@@ -260,7 +266,7 @@ public class CastleBot extends Bot{
 			if(me.turn == 850 ){
 				boolean blitz = false;
 				for(Integer[] c : myCastles)
-					if(!(c[1] == me.x && c[0] == me.y) && r.getRobot(c[2]) == null)
+					if( r.getRobot(c[2]) == null)
 						blitz = true;
 				if(blitz){
 					if(numCastles == 1){
@@ -308,8 +314,11 @@ public class CastleBot extends Bot{
 				}else if(other.unit > 2)
 					allyCount ++;
 			}
-			if(enemySighted && !attacked)
+			if(enemySighted && !attacked){
+
 				attacked = true;
+				r.castleTalk(200);
+			}
 			else if(attacked && !enemySighted)
 				attackFinished = true;
 			if(r.karbonite >= 25 && r.fuel >= 50 && !preacher) {
@@ -321,7 +330,9 @@ public class CastleBot extends Bot{
 						//r.log("A: " + a);
 					}
 				}
-				else if(me.turn % 20 == 0 && (r.karbonite > 100 || (attackFinished && r.karbonite >= 50 && allyCount < 5)))
+				else if(me.turn % 10 == 0 && (r.karbonite > 100 || (attackFinished && r.karbonite >= 50 && allyCount < 5)))
+					a = spawnSoldier(4,enemies);
+				else if(r.karbonite > 300)
 					a = spawnSoldier(4,enemies);
 				//else if(numCastles == 1 && me.turn > 1 && me.turn < 10)
 					//a = spawnSoldier(4);
@@ -372,11 +383,13 @@ public class CastleBot extends Bot{
 				else
 					next = nextFuel;
 			}
-			if(next != null && (r.karbonite >= 85 || Pathing.distance(next.x,next.y,me.x,me.y) <= 36 || (attackFinished && r.karbonite >= 60))) {
+			if(next != null && (r.karbonite >= 85 || (Pathing.distance(next.x,next.y,me.x,me.y) <= 36 && r.karbonite >=35) || (attackFinished && r.karbonite >= 60))) {
 
 				BuildAction a = spawnWorker(next.isKarb);
 					if(!a.equals(null)){
-						int s = 0;
+						int s = 50000;
+						if(me.turn%2==0)
+							s = 0;
 						s += allocate.x*100;
 						s += allocate.y;
 						r.signal(s,2);
@@ -460,7 +473,9 @@ public class CastleBot extends Bot{
 		LinkedList<Integer[]> path = Pathing.rangeAST(r,me.x,me.y,target[1],target[0],2,blockers);
 			if (!path.equals(null) && path.size()>0) {
 			Integer[] coord = path.poll();
-				int s = 20000;
+				int s = 40000;
+				if(me.turn%2==0)
+					s = 20000;
 				s += target[1] * 100 + target[0];
 				//r.log("Lattice (X, Y): " + target[1] + ", " + target[0]);
 				r.signal(s,2);

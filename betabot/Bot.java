@@ -15,6 +15,7 @@ public class Bot{
 
 	int symmetry;
 	int currTarget;
+	boolean even;
 
 	public Bot(MyRobot r){
 		currTarget = -1;

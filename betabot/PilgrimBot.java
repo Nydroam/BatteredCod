@@ -13,6 +13,8 @@ public class PilgrimBot extends Bot{
 		deposit = false;
 	}
 	public void extractSignal(int signal){
+		if((int)Math.floor(signal/10000) == 0)
+			even = true;
 		int sig = signal % 10000;
 		int ycor = sig % 100;
 		int xcor = (int)Math.floor((sig - ycor)/100);
@@ -87,6 +89,8 @@ public class PilgrimBot extends Bot{
 			endLocs[castle[0]][castle[1]] = true;
 			Cmap = Pathing.rangeBFS(r,endLocs,4,blockers,new Task());
 		}
+		else
+			even = !even;
 
 
 		if(enemyCastles != null){
@@ -109,6 +113,12 @@ public class PilgrimBot extends Bot{
 			//Pathing.printMap(Rmap,r);
 		}
 		if (!deposit){
+			for(Robot other : visible){
+				if(other.x == castle[1] && other.y == castle[0] && r.isRadioing(other)){
+					if(other.signal == 7777)
+						deposit = true;
+				}
+			}
 			LinkedList<Integer[]> enemies = new LinkedList<Integer[]>();
 			running = false;
 			for(Robot other: visible){
@@ -140,7 +150,7 @@ public class PilgrimBot extends Bot{
 				 
 			}
 			if(me.fuel == 100 || me.karbonite == 20){
-				
+
 				boolean dRange = false;
 				int castleDist = 9999;
 				for(Robot other : visible){
@@ -213,7 +223,10 @@ public class PilgrimBot extends Bot{
 					endLocs[castle[0]][castle[1]] = true;
 					Cmap = Pathing.rangeBFS(r,endLocs,4,blockers,new Task());
 					
-					r.signal(1,2);
+					int send = 1;
+					if (even)
+						send = 2;
+					r.signal(send,2);
 					return r.buildUnit(1,toBuild[1],toBuild[0]);
 				}
 				deposit = true;
@@ -299,7 +312,10 @@ public class PilgrimBot extends Bot{
 					endLocs[castle[0]][castle[1]] = true;
 					Cmap = Pathing.rangeBFS(r,endLocs,4,blockers,new Task());
 					
-					r.signal(1,2);
+					int send = 1;
+					if (even)
+						send = 2;
+					r.signal(send,2);
 					return r.buildUnit(1,toBuild[1],toBuild[0]);
 				}
 			}

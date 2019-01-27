@@ -22,6 +22,8 @@ public class ChurchBot extends Bot{
 			int sig;
 			for(Robot other : visible){
 				if(other.team == me.team && other.unit == 2 && r.isRadioing(other)){
+					if(other.signal == 2)
+						even = true;
 					builder = other.id;
 				}
 			}
@@ -55,7 +57,8 @@ public class ChurchBot extends Bot{
 			aKarbList = new LinkedList<Resource>();
 			aFuelList = new LinkedList<Resource>();
 			lattice = t.lattice;
-		}
+		}else
+			even = !even;
 		if(!allocLat.equals(null)){//match a ranger with a destination
 			for(Robot other:visible){
 				if(other.unit > 2 && Pathing.distance(other.x,other.y,me.x,me.y) <=36 && other.team == me.team && other.turn == 1){
@@ -172,7 +175,9 @@ public class ChurchBot extends Bot{
 				if(deadKarb || karbList.size() > 0){
 					BuildAction a = spawnWorker(true);
 					if(!a.equals(null)){
-						int s = 0;
+						int s = 50000;
+						if(even)
+							s = 0;
 						s += allocate.x*100;
 						s += allocate.y;
 						r.signal(s,2);
@@ -187,7 +192,9 @@ public class ChurchBot extends Bot{
 				if(deadFuel || fuelList.size() > 0){
 					BuildAction a = spawnWorker(false);
 					if(!a.equals(null)){
-						int s = 0;
+						int s = 50000;
+						if(even)
+							s = 0;
 						s += allocate.x*100;
 						s += allocate.y;
 						r.signal(s,2);
@@ -225,7 +232,9 @@ public class ChurchBot extends Bot{
 		LinkedList<Integer[]> path = Pathing.rangeAST(r,me.x,me.y,target[1],target[0],2,blockers);
 			if (!path.equals(null) && path.size()>0) {
 			Integer[] coord = path.poll();
-				int s = 20000;
+				int s = 40000;
+				if(even)
+					s = 20000;
 				s += target[1] * 100 + target[0];
 				//r.log("Lattice (X, Y): " + target[1] + ", " + target[0]);
 				r.signal(s,2);
@@ -234,7 +243,9 @@ public class ChurchBot extends Bot{
 		}else{
 			Integer[] go = Pathing.retreatMove(r,me.x,me.y,enemies,2,blockers);
 			if(!go.equals(null)){
-				int s = 20000;
+				int s = 40000;
+				if(even)
+					s = 20000;
 				s += target[1] * 100 + target[0];
 				//r.log("Lattice (X, Y): " + target[1] + ", " + target[0]);
 				r.signal(s,2);
