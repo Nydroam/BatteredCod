@@ -137,7 +137,7 @@ public class CastleBot extends Bot{
 			currSignal = signalQueue.poll();
 			r.signal(currSignal,2);
 		}
-		if(r.karbonite >= 30)
+		if(r.karbonite >= 30 && firstCastle)
 			return spawnUnit(5);
 		return null;
 	}

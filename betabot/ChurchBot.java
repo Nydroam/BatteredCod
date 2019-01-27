@@ -9,6 +9,7 @@ public class ChurchBot extends Bot{
 	int[][] resMap;
 	Resource allocate;
 	Integer[] allocLat;
+	int builder;
 	public ChurchBot(MyRobot r){
 		super(r);
 	}
@@ -18,7 +19,13 @@ public class ChurchBot extends Bot{
 
 			boolean[][] b = new boolean[r.map.length][r.map[0].length];
 			boolean[][] endLocs = new boolean[r.map.length][r.map[0].length];
-
+			int sig;
+			for(Robot other : visible){
+				if(other.team == me.team && other.unit == 2 && r.isRadioing(other)){
+					builder = other.id;
+				}
+			}
+			Robot builderRobot = r.getRobot(builder);
 			endLocs[me.y][me.x] = true;
 			Task t = new Task();
 			resMap = Pathing.rangeBFS(r,endLocs,4,b,t);
@@ -30,13 +37,18 @@ public class ChurchBot extends Bot{
 				if(Pathing.distance(res.x,res.y,me.x,me.y) >= 36){
 					karbList.remove(i);
 					i--;
-				}else
-					r.log("RESOURCE: " + res.x + ", " + res.y);
+				}else if(builderRobot != null && builderRobot.x == res.x && builderRobot.y == res.y){
+					karbList.remove(i);
+					i--;
+				}
 			}
 			r.log("KARBLIST: " + karbList);
 			for(int i = 0; i < fuelList.size(); i++){
 				Resource res = fuelList.get(i);
 				if(Pathing.distance(res.x,res.y,me.x,me.y) >= 36){
+					fuelList.remove(i);
+					i--;
+				}else if(builderRobot != null && builderRobot.x == res.x && builderRobot.y == res.y){
 					fuelList.remove(i);
 					i--;
 				}
@@ -104,7 +116,7 @@ public class ChurchBot extends Bot{
 				}
 				for(Integer[] c : lattice){
 					if(c[2] != -1){
-						if(r.getRobot(c[2]).equals(null))
+						if(r.getRobot(c[2]).equals(null) && Pathing.distance(c[1],c[0],me.x,me.y) <= 81)
 							c[2] = -1;
 					}
 				}
@@ -141,7 +153,7 @@ public class ChurchBot extends Bot{
 					
 					}
 				}
-				else if(me.turn % 5 == 0){
+				else if(me.turn % 15 == 0 || r.karbonite > 250){
 					a = spawnSoldier(4,enemies);
 				}
 				//else if(numCastles == 1 && me.turn > 1 && me.turn < 10)
@@ -214,7 +226,7 @@ public class ChurchBot extends Bot{
 				return r.buildUnit(unit,coord[1],coord[0]);
 			}
 		}else{
-			Integer[] go = Pathing.retreatMove(r,me.x,me.y,enemies,4,blockers);
+			Integer[] go = Pathing.retreatMove(r,me.x,me.y,enemies,2,blockers);
 			if(!go.equals(null)){
 				int s = 20000;
 				s += target[1] * 100 + target[0];

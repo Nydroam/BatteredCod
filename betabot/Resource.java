@@ -7,6 +7,7 @@ public class Resource{
 	int worker;
 	int priority;
 	boolean isKarb;
+	boolean replaced;
 	public Resource(int x, int y, int p){
 		this.x = x;
 		this.y = y;

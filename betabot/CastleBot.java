@@ -12,7 +12,8 @@ public class CastleBot extends Bot{
 	int[][] resMap;
 	Resource allocate;
 	Integer[] allocLat;
-	
+	boolean attacked;
+	boolean attackFinished;
 	
 	int signalCount;
 	public CastleBot(MyRobot r){
@@ -252,24 +253,27 @@ public class CastleBot extends Bot{
 							c[2] = -1;
 					}
 				}
-			/*if(me.turn%75 == 0 && me.turn > 0){
+			if(me.turn == 500 ){
 				if(numCastles == 1){
 					Integer[] enemy = enemyCastles.get(0);
-					r.signal(20000 + enemy[1] * 100 + enemy[0],100);
+					r.signal(30000 + enemy[1] * 100 + enemy[0],64);
+					return null;
 				}else
 					signalCount = numCastles-1;
+
 			}
 			if(signalCount > 0){
 				int s = 10000;
 				if(signalCount == 1)
-					s = 20000;
+					s = 30000;
 				Integer[] c = enemyCastles.get(signalCount);
 				
 				s += c[1] * 100 + c[0];
 				//r.log("Sending Signal: " + s);
-				r.signal(s,100);
+				r.signal(s,16);
 				signalCount--;
-			}*/
+				return null;
+			}
 			boolean preacher = false;
 			boolean enemySighted = false;
 			int enemyCount = 0;
@@ -277,6 +281,7 @@ public class CastleBot extends Bot{
 			LinkedList<Integer[]> enemies = new LinkedList<Integer[]>();
 			for(Robot other : visible){
 				if(other.team != me.team){
+					
 					enemySighted = true;
 					enemyCount++;
 					int enemyY = other.y;
@@ -293,6 +298,10 @@ public class CastleBot extends Bot{
 				}else if(other.unit > 2)
 					allyCount ++;
 			}
+			if(enemySighted && !attacked)
+				attacked = true;
+			else if(attacked && !enemySighted)
+				attackFinished = true;
 			if(r.karbonite >= 25 && r.fuel >= 50 && !preacher) {
 				Action a = null;
 				if(enemySighted && allyCount < enemyCount){
@@ -302,7 +311,7 @@ public class CastleBot extends Bot{
 						r.log("A: " + a);
 					}
 				}
-				else if(me.turn % 10 == 0 && me.turn >= 25)
+				else if(me.turn % 10 == 0 && me.turn >= 20 && (r.karbonite >= 60 || (attackFinished && r.karbonite >= 35)))
 					a = spawnSoldier(4,enemies);
 				//else if(numCastles == 1 && me.turn > 1 && me.turn < 10)
 					//a = spawnSoldier(4);
@@ -325,7 +334,7 @@ public class CastleBot extends Bot{
 				if(res.worker == -1)
 					deadFuel = true;
 			}
-			if((r.karbonite >= 100 ||me.turn > 20 )&& !fuelList.equals(null) && (fuelList.size() > 0 || deadFuel)) {
+			if((((r.karbonite >= 85 || (attackFinished && r.karbonite >= 60)) && me.turn >2) && !fuelList.equals(null) && (fuelList.size() > 0 || deadFuel))) {
 				//r.log("FUELED+============");
 					BuildAction a = spawnWorker(false);
 					if(!a.equals(null)){
@@ -342,7 +351,7 @@ public class CastleBot extends Bot{
 				if(res.worker == -1)
 					deadKarb = true;
 			}
-			if(!karbList.equals(null) && (karbList.size() > 0 || deadKarb)){
+			if(!karbList.equals(null) && (karbList.size() > 0 || deadKarb) && (r.karbonite >= 85 || me.turn <=2 || (attackFinished && r.karbonite >= 60))){
 				//r.log("Karbonite worker");
 				BuildAction a = spawnWorker(true);
 				if(!a.equals(null)){
@@ -393,7 +402,7 @@ public class CastleBot extends Bot{
 				return r.buildUnit(unit,coord[1],coord[0]);
 			}
 		}else{
-			Integer[] go = Pathing.retreatMove(r,me.x,me.y,enemies,4,blockers);
+			Integer[] go = Pathing.retreatMove(r,me.x,me.y,enemies,2,blockers);
 			if(!go.equals(null)){
 				int s = 20000;
 				s += target[1] * 100 + target[0];
@@ -414,9 +423,17 @@ public class CastleBot extends Bot{
 		for(int i = 0; i < resList.size(); i++){
 			Resource res = resList.get(i);
 			if(res.worker == -1){
-				if(res.priority > (int)Math.floor(r.map.length/4)){
-					resList.remove(i);
-					i--;
+				if(Pathing.distance(res.x,res.y,me.x,me.y)>36){
+					if(!res.replaced){
+						res.replaced = true;
+						allocate = res;
+						allocate.isKarb = karb;
+						found = true;
+						break;
+					}else{
+						resList.remove(i);
+						i--;
+					}
 				}else{
 					allocate = res;
 					allocate.isKarb = karb;
