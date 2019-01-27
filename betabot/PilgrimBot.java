@@ -3,6 +3,7 @@ import java.util.LinkedList;
 public class PilgrimBot extends Bot{
 	Integer[] toGo;
 	boolean deposit;
+	boolean running;
 	boolean[][] endLocs;
 	Integer[] castle;
 	int[][] Rmap;
@@ -18,8 +19,9 @@ public class PilgrimBot extends Bot{
 		toGo[1] = xcor;
 		toGo[0] = ycor;
 	}
-	public Integer[] nextMove(int[][] map){
+	public Integer[] nextMove(int[][] map, Integer[] dest){
 		int min = 9999;
+		int minDist = 9999;
 		Integer[] curr;
 		int[][] nullMap = new int[r.map.length][r.map[0].length];
 		for(int y = 0; y < nullMap.length; y++){
@@ -31,7 +33,20 @@ public class PilgrimBot extends Bot{
 		for(Integer[] x: moves){
 			if(map[x[0]][x[1]] < min){
 				min = map[x[0]][x[1]];
+				minDist = Pathing.distance(x[1],x[0],dest[1],dest[0]);
 				curr = x;
+			}
+			if(map[x[0]][x[1]] == min) {
+				int newDist = Pathing.distance(x[1],x[0],dest[1],dest[0]);
+				if(newDist < minDist) {
+					minDist = newDist;
+					curr = x;
+				}
+			}
+		}
+		if (map[curr[0]][curr[1]] == map[me.y][me.x]) {
+			if (Pathing.distance(curr[1],curr[0],dest[1],dest[0]) == Pathing.distance(me.x,me.y,dest[1],dest[0])) {
+				return null;
 			}
 		}
 		return curr;
@@ -95,12 +110,17 @@ public class PilgrimBot extends Bot{
 		}
 		if (!deposit){
 			LinkedList<Integer[]> enemies = new LinkedList<Integer[]>();
+			running = false;
 			for(Robot other: visible){
 				if (other.team != me.team && other.unit != 1 && other.unit != 2){
 					if (me.karbonite > 0 || me.fuel > 0) {
 						deposit = true;
 						break;
 					} else {
+						int dist = Pathing.distance(other.x,other.y,me.x,me.y);
+						if (dist <= 64) {
+							running = true;
+						}
 						Integer[] enemyCoord = new Integer[2];
 						enemyCoord[1] = other.x;
 						enemyCoord[0] = other.y;
@@ -109,13 +129,18 @@ public class PilgrimBot extends Bot{
 				}
 			}
 			if(!enemies.isEmpty()) {
-				Integer[] move = Pathing.retreatMove(r,me.x,me.y,enemies,4,blockers);
-				Action a = r.move(move[1], move[0]);
-				if(!a.equals(null))
-				return a; 
+				if (running) {
+					Integer[] move = Pathing.retreatMove(r,me.x,me.y,enemies,4,blockers);
+					Action a = r.move(move[1], move[0]);
+					if(!a.equals(null))
+						return a;
+				} else {
+					return null;
+				}
+				 
 			}
 			if(me.fuel == 100 || me.karbonite == 20){
-	boolean dRange = false;
+				boolean dRange = false;
 				int castleDist = 9999;
 				for(Robot other : visible){
 					if(other.team == me.team && (other.unit == 0 || other.unit == 1)){
@@ -280,13 +305,15 @@ public class PilgrimBot extends Bot{
 			return r.mine();
 		}
 		if(deposit){
-
-			Integer[] move = nextMove(Cmap);
+			Integer[] move = nextMove(Cmap,castle);
+			if (move == null) {
+				return null;
+			}
 			return r.move(move[1] - me.x, move[0] -me.y);
 		}
 		else{
-			Integer[] move = nextMove(Rmap);
-			if (Rmap[move[0]][move[1]] == Rmap[me.y][me.x]) {
+			Integer[] move = nextMove(Rmap,toGo);
+			if (move == null) {
 				return null;
 			}
 			return r.move(move[1] - me.x, move[0] -me.y);
