@@ -140,6 +140,7 @@ public class PilgrimBot extends Bot{
 				 
 			}
 			if(me.fuel == 100 || me.karbonite == 20){
+				
 				boolean dRange = false;
 				int castleDist = 9999;
 				for(Robot other : visible){

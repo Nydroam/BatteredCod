@@ -140,7 +140,6 @@ public class ProphetBot extends Bot{
 		for(Robot other : visible){
 			if(other.x == castle[1] && other.y == castle[0] && r.isRadioing(other)){
 				int sig = other.signal;
-				r.log("SIGNAL: " + sig);
 				if((int)Math.floor(sig/10000) != 0)
 					extractSig(sig);
 			}
@@ -179,7 +178,7 @@ public class ProphetBot extends Bot{
 		boolean preacher = false;
 		for(Robot other : visible){
 			if(r.isVisible(other)&&other.team != me.team){
-				if(other.unit == 5 && Pathing.distance(other.x,other.y,me.x,me.y)<=25)
+				if(other.unit == 5 && Pathing.distance(other.x,other.y,me.x,me.y)<=26)
 					preacher = true;
 				enemySeen = true;
 				int dist = Pathing.distance(other.x,other.y,me.x,me.y);
@@ -187,10 +186,10 @@ public class ProphetBot extends Bot{
 				enemyCoord[1] = other.x;
 				enemyCoord[0] = other.y;
 				enemies.add(enemyCoord);
-				//r.log("Enemy At: " + other.x + "," + other.y);
+				r.log("Enemy At: " + other.x + "," + other.y);
 				if(dist <= 16) {
 					minRange = true;
-					//r.log("Start Running");
+					r.log("Start Running");
 				}
 			}
 		}
@@ -207,17 +206,17 @@ public class ProphetBot extends Bot{
 		if(enemySeen){
 
 			Action atk = attack();
-			r.log("PROPHET ATTACKING " + atk);
 			if(!atk.equals(null))
 				return atk;
 		}
 
 		if(ready ||  !(me.x == toGo[1] && me.y == toGo[0]) || r.fuelMap[me.y][me.x] || r.karboniteMap[me.y][me.x]){//forward march
-		
-			Integer[] move = nextMove(Rmap);
-			Action a = r.move(move[1] - me.x, move[0] -me.y);
-			if(!a.equals(null))
-				return a; 
+			if(Pathing.distance(me.x,me.y,toGo[1],toGo[0]) > 4 || !blockers[toGo[0]][toGo[1]] ){
+				Integer[] move = nextMove(Rmap);
+				Action a = r.move(move[1] - me.x, move[0] -me.y);
+				if(!a.equals(null))
+					return a; 
+			}
 		}
 		return null;
 	}

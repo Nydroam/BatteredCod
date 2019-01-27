@@ -42,7 +42,6 @@ public class ChurchBot extends Bot{
 					i--;
 				}
 			}
-			r.log("KARBLIST: " + karbList);
 			for(int i = 0; i < fuelList.size(); i++){
 				Resource res = fuelList.get(i);
 				if(Pathing.distance(res.x,res.y,me.x,me.y) >= 36){
@@ -53,7 +52,6 @@ public class ChurchBot extends Bot{
 					i--;
 				}
 			}
-			r.log("FUELLIST: " + fuelList);
 			aKarbList = new LinkedList<Resource>();
 			aFuelList = new LinkedList<Resource>();
 			lattice = t.lattice;
@@ -203,12 +201,20 @@ public class ChurchBot extends Bot{
 	}
 
 	public BuildAction spawnSoldier(int unit, LinkedList<Integer[]> enemies){
-		Integer[] target;
-		for(Integer[] c : lattice){
+		Integer[] target = null;;
+		for(int i = 0; i < lattice.size(); i++){
+			Integer[] c = lattice.get(i);
 			if(c[2] == -1){
-				allocLat = c;
-				target = c;
-				break;
+				if(lblockers[c[0]][c[1]])
+					continue;
+				if(Pathing.distance(c[1],c[0],me.x,me.y) > 100){
+					lattice.remove(i);
+					i--;
+				}else{
+					allocLat = c;
+					target = c;
+					break;
+				}
 			}
 		}
 		if(target.equals(null))

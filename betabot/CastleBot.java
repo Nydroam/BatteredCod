@@ -94,6 +94,8 @@ public class CastleBot extends Bot{
 			resMap = Pathing.rangeBFS(r,endLocs,4,b,t);
 			
 			karbList = t.karbList;
+			for(Resource res:karbList)
+				res.isKarb = true;
 			fuelList = t.fuelList;
 			aKarbList = new LinkedList<Resource>();
 			aFuelList = new LinkedList<Resource>();
@@ -212,6 +214,8 @@ public class CastleBot extends Bot{
 				resMap = Pathing.rangeBFS(r,endLocs,4,b,t);
 
 				karbList = t.karbList;
+				for(Resource res:karbList)
+					res.isKarb = true;
 				karbList.poll();
 				fuelList = t.fuelList;
 				lattice = t.lattice;
@@ -253,13 +257,19 @@ public class CastleBot extends Bot{
 							c[2] = -1;
 					}
 				}
-			if(me.turn == 500 ){
-				if(numCastles == 1){
-					Integer[] enemy = enemyCastles.get(0);
-					r.signal(30000 + enemy[1] * 100 + enemy[0],64);
-					return null;
-				}else
-					signalCount = numCastles-1;
+			if(me.turn == 850 ){
+				boolean blitz = false;
+				for(Integer[] c : myCastles)
+					if(!(c[1] == me.x && c[0] == me.y) && r.getRobot(c[2]) == null)
+						blitz = true;
+				if(blitz){
+					if(numCastles == 1){
+						Integer[] enemy = enemyCastles.get(0);
+						r.signal(30000 + enemy[1] * 100 + enemy[0],64);
+						return null;
+					}else
+						signalCount = numCastles-1;
+				}
 
 			}
 			if(signalCount > 0){
@@ -304,14 +314,14 @@ public class CastleBot extends Bot{
 				attackFinished = true;
 			if(r.karbonite >= 25 && r.fuel >= 50 && !preacher) {
 				Action a = null;
-				if(enemySighted && allyCount < enemyCount){
-					r.log("try spawn prophet");
+				if(enemySighted && allyCount < enemyCount + 1){
+					//r.log("try spawn prophet");
 					if(r.fuel > 200){
 						a = spawnSoldier(4,enemies);
-						r.log("A: " + a);
+						//r.log("A: " + a);
 					}
 				}
-				else if(me.turn % 10 == 0 && me.turn >= 20 && (r.karbonite >= 60 || (attackFinished && r.karbonite >= 35)))
+				else if(me.turn % 20 == 0 && (r.karbonite > 100 || (attackFinished && r.karbonite >= 50 && allyCount < 5)))
 					a = spawnSoldier(4,enemies);
 				//else if(numCastles == 1 && me.turn > 1 && me.turn < 10)
 					//a = spawnSoldier(4);
@@ -329,12 +339,51 @@ public class CastleBot extends Bot{
 		}
 		if( r.karbonite >= 10 && r.fuel >= 50 && (me.turn == 1 || fullyInit)) {
 		
-			boolean deadFuel = false;
+			Resource nextFuel = null;
 			for(Resource res: aFuelList){
-				if(res.worker == -1)
-					deadFuel = true;
+				if(res.worker == -1 && !res.replaced){
+					nextFuel = res;
+					break;
+				}
 			}
-			if((((r.karbonite >= 85 || (attackFinished && r.karbonite >= 60)) && me.turn >2) && !fuelList.equals(null) && (fuelList.size() > 0 || deadFuel))) {
+			if(nextFuel == null && fuelList != null && fuelList.size() > 0){
+				nextFuel = fuelList.get(0);
+			}
+
+			Resource nextKarb = null;
+			for(Resource res: aKarbList){
+				if(res.worker == -1 && !res.replaced){
+					nextKarb = res;
+					break;
+				}
+			}
+			if(nextKarb == null && karbList != null && karbList.size() > 0){
+				nextKarb = karbList.get(0);
+			}
+
+			Resource next = null;
+			if(nextKarb == null)
+				next = nextFuel;
+			else if(nextFuel == null)
+				next = nextKarb;
+			else{
+				if(nextKarb.priority <= nextFuel.priority)
+					next = nextKarb;
+				else
+					next = nextFuel;
+			}
+			if(next != null && (r.karbonite >= 85 || Pathing.distance(next.x,next.y,me.x,me.y) <= 36 || (attackFinished && r.karbonite >= 60))) {
+
+				BuildAction a = spawnWorker(next.isKarb);
+					if(!a.equals(null)){
+						int s = 0;
+						s += allocate.x*100;
+						s += allocate.y;
+						r.signal(s,2);
+						return a;
+					}
+			}
+			/*if((((r.karbonite >= 85 || (attackFinished && r.karbonite >= 60)) && me.turn >2) && !fuelList.equals(null) && (fuelList.size() > 0 || deadFuel))) {
 				//r.log("FUELED+============");
 					BuildAction a = spawnWorker(false);
 					if(!a.equals(null)){
@@ -346,11 +395,7 @@ public class CastleBot extends Bot{
 					}
 				
 			}
-			boolean deadKarb = false;
-			for(Resource res: aKarbList){
-				if(res.worker == -1)
-					deadKarb = true;
-			}
+			
 			if(!karbList.equals(null) && (karbList.size() > 0 || deadKarb) && (r.karbonite >= 85 || me.turn <=2 || (attackFinished && r.karbonite >= 60))){
 				//r.log("Karbonite worker");
 				BuildAction a = spawnWorker(true);
@@ -361,7 +406,7 @@ public class CastleBot extends Bot{
 					r.signal(s,2);
 					return a;
 				}
-			}
+			}*/
 		}
 
 		return null;
@@ -379,12 +424,32 @@ public class CastleBot extends Bot{
 	}
 
 	public BuildAction spawnSoldier(int unit, LinkedList<Integer[]> enemies){
-		Integer[] target;
-		for(Integer[] c : lattice){
+		Integer[] target = null;
+		int min = 99999;
+		int min2 = 99999;
+		for(int i = 0; i < lattice.size(); i++){
+			Integer[] c = lattice.get(i);
 			if(c[2] == -1){
-				allocLat = c;
-				target = c;
-				break;
+				if(lblockers[c[0]][c[1]])
+					continue;
+				if(Pathing.distance(c[1],c[0],me.x,me.y) > 100){
+					lattice.remove(i);
+					i--;
+				}else{
+					int sum = 0;
+					for(Integer[] e : enemyCastles){
+						sum += Pathing.distance(c[1],c[0],e[1],e[0]);
+					}
+					if( Pathing.distance(me.x,me.y,c[1],c[0]) <= min){
+						min = Pathing.distance(me.x,me.y,c[1],c[0]);
+						if(sum < min2){
+							allocLat = c;
+							target = c;
+							min2 = sum;
+						}
+					}else
+						break;
+				}
 			}
 		}
 		if(target.equals(null))

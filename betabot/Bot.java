@@ -5,7 +5,7 @@ public class Bot{
 	MyRobot r;
 	Robot me;
 	boolean[][] blockers;
-
+	boolean[][] lblockers;
 	//when the bot has all the information it needs to function
 	boolean fullyInit;
 	int numCastles;
@@ -29,6 +29,12 @@ public class Bot{
 		for(Robot other : r.getVisibleRobots()){
 			if(r.isVisible(other) && other.id != me.id){
 				blockers[other.y][other.x] = true;
+			}
+		}
+		lblockers = new boolean[newr.map.length][newr.map[0].length];
+		for(Robot other : r.getVisibleRobots()){
+			if(r.isVisible(other) && other.id != me.id && other.team == me.team){
+				lblockers[other.y][other.x] = true;
 			}
 		}
 		
