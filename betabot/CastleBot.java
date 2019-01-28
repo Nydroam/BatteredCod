@@ -14,7 +14,8 @@ public class CastleBot extends Bot{
 	Integer[] allocLat;
 	boolean attacked;
 	boolean attackFinished;
-	
+	int[] xCoors;
+	int[] yCoors;
 	int signalCount;
 	public CastleBot(MyRobot r){
 		super(r);
@@ -34,7 +35,12 @@ public class CastleBot extends Bot{
 		if(me.turn == 1){//TURN 1---------------------------------------------------------------------------------------
 
 			//Initialization
-
+			xCoors = new int[5000];
+			yCoors = new int[5000];
+			for(int i = 0; i < xCoors.length; i++)
+				xCoors[i] = -1;
+			for(int i = 0; i < yCoors.length; i++)
+				yCoors[i] = -1;
 			symmetry = Logistics.symmetry(r.map,r);
 			enemyCastles = Logistics.findOpposite(r,me.x,me.y,symmetry);
 			myCastles = new LinkedList<Integer[]>();
@@ -236,10 +242,17 @@ public class CastleBot extends Bot{
 			}
 		}
 		if(fullyInit){//FULLY INITIALIZED, START DOING STUFF ====================================================================================
+			
 			for(Robot other: visible){
 				if(other.team == me.team && other.id != me.id){
-					if(other.castle_talk == 200)
+					if(other.castle_talk == 200){
 						r.signal(7777,25);
+					}
+					else if(me.turn%2 == 1){
+						xCoors[other.id] = other.castle_talk;
+					}else{
+						yCoors[other.id] = other.castle_talk;
+					}
 				}
 			}
 			//replacing dead workers
@@ -332,7 +345,7 @@ public class CastleBot extends Bot{
 				}
 				else if(me.turn % 10 == 0 && (r.karbonite > 100 || (attackFinished && r.karbonite >= 50 && allyCount < 5)))
 					a = spawnSoldier(4,enemies);
-				else if(r.karbonite > 300)
+				else if(r.karbonite > 300 )
 					a = spawnSoldier(4,enemies);
 				//else if(numCastles == 1 && me.turn > 1 && me.turn < 10)
 					//a = spawnSoldier(4);
@@ -443,12 +456,23 @@ public class CastleBot extends Bot{
 		for(int i = 0; i < lattice.size(); i++){
 			Integer[] c = lattice.get(i);
 			if(c[2] == -1){
-				if(lblockers[c[0]][c[1]])
+				if(Pathing.distance(me.x,me.y,c[1],c[0]) > 100){
+					boolean found = false;
+					for(int j = 0; j < xCoors.length; j++){
+						if(r.getRobot(j) == null){
+							xCoors[j] = -1;
+							yCoors[j] = -1;
+						}
+						if(xCoors[j] == c[1] && yCoors[j] == c[0])
+							found = true;
+					}
+					if(found)
+						continue;
+				}
+				if(lblockers[c[0]][c[1]]) {
 					continue;
-				if(Pathing.distance(c[1],c[0],me.x,me.y) > 100){
-					lattice.remove(i);
-					i--;
-				}else{
+				}
+				
 					int sum = 0;
 					for(Integer[] e : enemyCastles){
 						sum += Pathing.distance(c[1],c[0],e[1],e[0]);
@@ -462,7 +486,7 @@ public class CastleBot extends Bot{
 						}
 					}else
 						break;
-				}
+				
 			}
 		}
 		if(target.equals(null))
@@ -484,7 +508,9 @@ public class CastleBot extends Bot{
 		}else{
 			Integer[] go = Pathing.retreatMove(r,me.x,me.y,enemies,2,blockers);
 			if(!go.equals(null)){
-				int s = 20000;
+				int s = 40000;
+				if(me.turn%2==0)
+					s = 20000;
 				s += target[1] * 100 + target[0];
 				//r.log("Lattice (X, Y): " + target[1] + ", " + target[0]);
 				r.signal(s,2);

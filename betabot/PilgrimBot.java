@@ -167,7 +167,7 @@ public class PilgrimBot extends Bot{
 						}
 					}
 				}
-				if(!dRange && r.karbonite >= 50 && r.fuel >=300){//make church if no church/castle in range
+				if(!dRange && r.karbonite >= 50 && r.fuel >=400){//make church if no church/castle in range
 					int range = 36; //range to check for distance to resources
 					int steps = (int)Math.floor(Math.sqrt(range));
 					LinkedList<Integer[]> churchTile = new LinkedList<Integer[]>();
@@ -256,7 +256,7 @@ public class PilgrimBot extends Bot{
 						}
 					}
 				}
-				if(!dRange && r.karbonite >= 50 && r.fuel >=300){//make church if no church/castle in range
+				if(!dRange && r.karbonite >= 100 && r.fuel >=400){//make church if no church/castle in range
 					int range = 36; //range to check for distance to resources
 					int steps = (int)Math.floor(Math.sqrt(range));
 					LinkedList<Integer[]> churchTile = new LinkedList<Integer[]>();

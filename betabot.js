@@ -144,6 +144,7 @@ var bc19;
             this.worker = 0;
             this.priority = 0;
             this.isKarb = false;
+            this.replaced = false;
             this.x = x;
             this.y = y;
             this.priority = p;
@@ -389,11 +390,15 @@ var bc19;
             this.r = null;
             this.me = null;
             this.blockers = null;
+            this.lblockers = null;
             this.fullyInit = false;
             this.numCastles = 0;
             this.enemyCastles = null;
             this.myCastles = null;
             this.symmetry = 0;
+            this.currTarget = 0;
+            this.even = false;
+            this.currTarget = -1;
             this.update(r);
         }
         Bot.prototype.update = function (newr) {
@@ -420,31 +425,66 @@ var bc19;
                     }
                 }
             }
+            this.lblockers = (function (dims) { var allocate = function (dims) { if (dims.length == 0) {
+                return undefined;
+            }
+            else {
+                var array = [];
+                for (var i = 0; i < dims[0]; i++) {
+                    array.push(allocate(dims.slice(1)));
+                }
+                return array;
+            } }; return allocate(dims); })([newr.map.length, newr.map[0].length]);
+            {
+                var array124 = this.r.getVisibleRobots();
+                for (var index123 = 0; index123 < array124.length; index123++) {
+                    var other = array124[index123];
+                    {
+                        if (this.r.isVisible(other) && other.id !== this.me.id && other.team === this.me.team) {
+                            this.lblockers[other.y][other.x] = true;
+                        }
+                    }
+                }
+            }
         };
         Bot.prototype.act = function () {
             return null;
         };
         Bot.prototype.attack = function () {
             var target = null;
-            {
-                var array124 = this.r.getVisibleRobots();
-                for (var index123 = 0; index123 < array124.length; index123++) {
-                    var other = array124[index123];
-                    {
-                        if (this.r.isVisible(other) && other.team !== this.me.team) {
-                            var dist = bc19.Pathing.distance(other.x, other.y, this.me.x, this.me.y);
-                            var range = 16;
-                            if (this.me.unit === 4 || this.me.unit === 0)
-                                range = 64;
-                            if (dist <= range) {
-                                target = other;
-                                if (this.me.unit === 4 && dist < 16)
-                                    target = null;
+            if (this.currTarget === -1 || (function (o1, o2) { if (o1 && o1.equals) {
+                return o1.equals(o2);
+            }
+            else {
+                return o1 === o2;
+            } })(this.r.getRobot(this.currTarget), null)) {
+                var min = 9999;
+                {
+                    var array126 = this.r.getVisibleRobots();
+                    for (var index125 = 0; index125 < array126.length; index125++) {
+                        var other = array126[index125];
+                        {
+                            if (this.r.isVisible(other) && other.team !== this.me.team) {
+                                var dist = bc19.Pathing.distance(other.x, other.y, this.me.x, this.me.y);
+                                var range = 16;
+                                if (this.me.unit === 4 || this.me.unit === 0)
+                                    range = 64;
+                                if (dist <= range) {
+                                    if (target == null || target.unit === 2 || other.unit !== 2) {
+                                        if (dist < min && !(this.me.unit === 4 && dist < 16)) {
+                                            target = other;
+                                            min = dist;
+                                            this.currTarget = other.id;
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
+            else
+                target = this.r.getRobot(this.currTarget);
             if ((function (o1, o2) { if (o1 && o1.equals) {
                 return o1.equals(o2);
             }
@@ -512,37 +552,55 @@ var bc19;
                         continue;
                     }
                     var dist = Pathing.distance(0, 0, x, y);
-                    if (dist <= range && Pathing.checkBounds(r, x + startX, y + startY, blockers) && dirMap[y + startY][x + startX] === 99) {
-                        var coor = new Array(4);
-                        coor[0] = y + startY;
-                        coor[1] = x + startX;
-                        if (!minX) {
-                            minX = true;
-                            coor[2] = 1;
-                        }
-                        else if (!maxX) {
-                            maxX = true;
-                            coor[2] = 1;
+                    if (dist <= range && Pathing.checkBounds(r, x + startX, y + startY, blockers)) {
+                        if (dirMap[y + startY][x + startX] === 99) {
+                            var coor = new Array(4);
+                            coor[0] = y + startY;
+                            coor[1] = x + startX;
+                            if (!minX) {
+                                minX = true;
+                                coor[2] = 1;
+                            }
+                            else if (!maxX) {
+                                maxX = true;
+                                coor[2] = 1;
+                            }
+                            else {
+                                /* get */ results[results.length - 1][2] = 0;
+                                coor[2] = 1;
+                            }
+                            if (!yMin[y + steps]) {
+                                yMin[y + steps] = true;
+                                coor[2] = 1;
+                            }
+                            else if (!yMax[y + steps]) {
+                                yMax[y + steps] = true;
+                                /* set */ (prevCoor[y + steps] = coor);
+                                coor[2] = 1;
+                            }
+                            else {
+                                /* get */ prevCoor[y + steps][2] = 0;
+                                /* set */ (prevCoor[y + steps] = coor);
+                                coor[2] = 1;
+                            }
+                            /* add */ (results.push(coor) > 0);
                         }
                         else {
-                            /* get */ results[results.length - 1][2] = 0;
-                            coor[2] = 1;
+                            if (!minX) {
+                                minX = true;
+                            }
+                            else if (maxX) {
+                                /* get */ results[results.length - 1][2] = 0;
+                                maxX = false;
+                            }
+                            if (!yMin[y + steps]) {
+                                yMin[y + steps] = true;
+                            }
+                            else if (yMax[y + steps]) {
+                                /* get */ prevCoor[y + steps][2] = 0;
+                                yMax[y + steps] = false;
+                            }
                         }
-                        if (!yMin[y + steps]) {
-                            yMin[y + steps] = true;
-                            coor[2] = 1;
-                        }
-                        else if (!yMax[y + steps]) {
-                            yMax[y + steps] = true;
-                            /* set */ (prevCoor[y + steps] = coor);
-                            coor[2] = 1;
-                        }
-                        else {
-                            /* get */ prevCoor[y + steps][2] = 0;
-                            /* set */ (prevCoor[y + steps] = coor);
-                            coor[2] = 1;
-                        }
-                        /* add */ (results.push(coor) > 0);
                     }
                 }
                 ;
@@ -558,6 +616,40 @@ var bc19;
             var nodes = ([]);
             var yBound = r.map.length;
             var xBound = r.map[0].length;
+            var lattice = (function (dims) { var allocate = function (dims) { if (dims.length == 0) {
+                return undefined;
+            }
+            else {
+                var array = [];
+                for (var i = 0; i < dims[0]; i++) {
+                    array.push(allocate(dims.slice(1)));
+                }
+                return array;
+            } }; return allocate(dims); })([r.map.length, r.map[0].length]);
+            lattice = (function (dims) { var allocate = function (dims) { if (dims.length == 0) {
+                return undefined;
+            }
+            else {
+                var array = [];
+                for (var i = 0; i < dims[0]; i++) {
+                    array.push(allocate(dims.slice(1)));
+                }
+                return array;
+            } }; return allocate(dims); })([r.map.length, r.map[0].length]);
+            for (var y = 0; y < r.map.length; y++) {
+                for (var x = 0; x < r.map[0].length; x++) {
+                    if (y % 2 === 0) {
+                        if (x % 2 === 0)
+                            lattice[y][x] = true;
+                    }
+                    else {
+                        if (x % 2 === 1)
+                            lattice[y][x] = true;
+                    }
+                }
+                ;
+            }
+            ;
             var dirMap = (function (dims) { var allocate = function (dims) { if (dims.length == 0) {
                 return 0;
             }
@@ -587,6 +679,52 @@ var bc19;
                 ;
             }
             ;
+            var rMap = (function (dims) { var allocate = function (dims) { if (dims.length == 0) {
+                return undefined;
+            }
+            else {
+                var array = [];
+                for (var i = 0; i < dims[0]; i++) {
+                    array.push(allocate(dims.slice(1)));
+                }
+                return array;
+            } }; return allocate(dims); })([r.map.length, r.map[0].length]);
+            for (var tempY = 0; tempY < rMap.length; tempY++) {
+                for (var tempX = 0; tempX < rMap[0].length; tempX++) {
+                    if (r.getFuelMap()[tempY][tempX] || r.getKarboniteMap()[tempY][tempX])
+                        rMap[tempY][tempX] = true;
+                }
+                ;
+            }
+            ;
+            var karbMap = (function (dims) { var allocate = function (dims) { if (dims.length == 0) {
+                return undefined;
+            }
+            else {
+                var array = [];
+                for (var i = 0; i < dims[0]; i++) {
+                    array.push(allocate(dims.slice(1)));
+                }
+                return array;
+            } }; return allocate(dims); })([r.map.length, r.map[0].length]);
+            var fuelMap = (function (dims) { var allocate = function (dims) { if (dims.length == 0) {
+                return undefined;
+            }
+            else {
+                var array = [];
+                for (var i = 0; i < dims[0]; i++) {
+                    array.push(allocate(dims.slice(1)));
+                }
+                return array;
+            } }; return allocate(dims); })([r.map.length, r.map[0].length]);
+            for (var tempY = 0; tempY < rMap.length; tempY++) {
+                for (var tempX = 0; tempX < rMap[0].length; tempX++) {
+                    karbMap[tempY][tempX] = r.getKarboniteMap()[tempY][tempX];
+                    fuelMap[tempY][tempX] = r.getFuelMap()[tempY][tempX];
+                }
+                ;
+            }
+            ;
             while ((!(nodes.length == 0))) {
                 var curr = (function (a) { return a.length == 0 ? null : a.shift(); })(nodes);
                 var currY = curr[0];
@@ -604,16 +742,37 @@ var bc19;
                             (nodes.push(coor) > 0);
                         dirMap[coorY][coorX] = step + 1;
                         if (t.markKarb && coor[3] === 1) {
-                            var karbMap = r.getKarboniteMap();
                             if (karbMap[coorY][coorX]) {
                                 /* add */ (t.karbList.push(new bc19.Resource(coorX, coorY, step)) > 0);
                             }
                         }
                         if (t.markFuel && coor[3] === 1) {
-                            var fuelMap = r.getFuelMap();
                             if (fuelMap[coorY][coorX]) {
-                                /* add */ (t.fuelList.push(new bc19.Resource(coorX, coorY, step)) > 0);
+                                /* add */ (t.fuelList.push(new bc19.Resource(coorX, coorY, step + 1)) > 0);
                             }
+                        }
+                        var s = 6;
+                        if ((fuelMap[coorY][coorX] || karbMap[coorY][coorX]) && coor[3] === 1 && Pathing.distance(r.me.x, r.me.y, coorX, coorY) >= s * s && r.me.unit === 0) {
+                            for (var dy = -1 * s; dy <= s; dy++) {
+                                for (var dx = -1 * s; dx <= s; dx++) {
+                                    var checkX = coorX + dx;
+                                    var checkY = coorY + dy;
+                                    if (Pathing.distance(coorX, coorY, checkX, checkY) <= s * s && Pathing.checkBounds(r, checkX, checkY, blockers)) {
+                                        fuelMap[checkY][checkX] = false;
+                                        karbMap[checkY][checkX] = false;
+                                    }
+                                }
+                                ;
+                            }
+                            ;
+                        }
+                        if (lattice[coorY][coorX] && coor[3] === 1 && !rMap[coorY][coorX] && step + 1 > 1) {
+                            var l = new Array(4);
+                            l[0] = coorY;
+                            l[1] = coorX;
+                            l[2] = -1;
+                            l[3] = step + 1;
+                            /* add */ (t.lattice.push(l) > 0);
                         }
                     }
                 }
@@ -684,15 +843,14 @@ var bc19;
                     return state_1.value;
             }
             ;
-            path = Pathing.createPath(r, startX, startY, endX, endY, range, dirMap, blockers);
-            return path;
+            return null;
         };
         Pathing.findNext = function (nodes, endX, endY, dirMap) {
             var nextNode;
             var minStep = 9999;
             var minDist = 9999;
-            for (var index125 = 0; index125 < nodes.length; index125++) {
-                var node = nodes[index125];
+            for (var index127 = 0; index127 < nodes.length; index127++) {
+                var node = nodes[index127];
                 {
                     var newDist = Pathing.distance(node[1], node[0], endX, endY);
                     if (newDist < minDist) {
@@ -789,12 +947,11 @@ var bc19;
                     var yCor = myY + y;
                     if (dist <= range && Pathing.checkBounds(r, xCor, yCor, blockers)) {
                         var newDist = 0;
-                        for (var index126 = 0; index126 < enemies.length; index126++) {
-                            var enemyCoord = enemies[index126];
-                            {
-                                newDist += Pathing.distance(xCor, yCor, enemyCoord[1], enemyCoord[0]);
-                            }
+                        for (var i = 0; i < enemies.length; i++) {
+                            var enemyCoord = enemies[i];
+                            newDist += Pathing.distance(xCor, yCor, enemyCoord[1], enemyCoord[0]);
                         }
+                        ;
                         if (newDist > maxDist) {
                             maxDist = newDist;
                             move[1] = x;
@@ -822,10 +979,12 @@ var bc19;
             this.markKarb = false;
             this.karbList = null;
             this.fuelList = null;
+            this.lattice = null;
             this.markFuel = true;
             this.markKarb = true;
             this.karbList = ([]);
             this.fuelList = ([]);
+            this.lattice = ([]);
         }
         return Task;
     }());
@@ -993,9 +1152,428 @@ var bc19;
     var ChurchBot = (function (_super) {
         __extends(ChurchBot, _super);
         function ChurchBot(r) {
-            return _super.call(this, r) || this;
+            var _this = _super.call(this, r) || this;
+            _this.lattice = null;
+            _this.karbList = null;
+            _this.aKarbList = null;
+            _this.fuelList = null;
+            _this.aFuelList = null;
+            _this.resMap = null;
+            _this.allocate = null;
+            _this.allocLat = null;
+            _this.builder = 0;
+            return _this;
         }
         ChurchBot.prototype.act = function () {
+            var visible = this.r.getVisibleRobots();
+            if (this.me.turn === 1) {
+                var b = (function (dims) { var allocate = function (dims) { if (dims.length == 0) {
+                    return undefined;
+                }
+                else {
+                    var array = [];
+                    for (var i = 0; i < dims[0]; i++) {
+                        array.push(allocate(dims.slice(1)));
+                    }
+                    return array;
+                } }; return allocate(dims); })([this.r.map.length, this.r.map[0].length]);
+                var endLocs = (function (dims) { var allocate = function (dims) { if (dims.length == 0) {
+                    return undefined;
+                }
+                else {
+                    var array = [];
+                    for (var i = 0; i < dims[0]; i++) {
+                        array.push(allocate(dims.slice(1)));
+                    }
+                    return array;
+                } }; return allocate(dims); })([this.r.map.length, this.r.map[0].length]);
+                var sig = void 0;
+                for (var index128 = 0; index128 < visible.length; index128++) {
+                    var other = visible[index128];
+                    {
+                        if (other.team === this.me.team && other.unit === 2 && this.r.isRadioing(other)) {
+                            if (other.signal === 2)
+                                this.even = true;
+                            this.builder = other.id;
+                        }
+                    }
+                }
+                var builderRobot = this.r.getRobot(this.builder);
+                endLocs[this.me.y][this.me.x] = true;
+                var t = new bc19.Task();
+                this.resMap = bc19.Pathing.rangeBFS(this.r, endLocs, 4, b, t);
+                this.karbList = t.karbList;
+                this.fuelList = t.fuelList;
+                for (var i = 0; i < this.karbList.length; i++) {
+                    var res = this.karbList[i];
+                    if (bc19.Pathing.distance(res.x, res.y, this.me.x, this.me.y) >= 36) {
+                        /* remove */ this.karbList.splice(i, 1);
+                        i--;
+                    }
+                    else if (builderRobot != null && builderRobot.x === res.x && builderRobot.y === res.y) {
+                        /* remove */ this.karbList.splice(i, 1);
+                        i--;
+                    }
+                }
+                ;
+                for (var i = 0; i < this.fuelList.length; i++) {
+                    var res = this.fuelList[i];
+                    if (bc19.Pathing.distance(res.x, res.y, this.me.x, this.me.y) >= 36) {
+                        /* remove */ this.fuelList.splice(i, 1);
+                        i--;
+                    }
+                    else if (builderRobot != null && builderRobot.x === res.x && builderRobot.y === res.y) {
+                        /* remove */ this.fuelList.splice(i, 1);
+                        i--;
+                    }
+                }
+                ;
+                this.aKarbList = ([]);
+                this.aFuelList = ([]);
+                this.lattice = t.lattice;
+            }
+            else
+                this.even = !this.even;
+            if (!(function (o1, o2) { if (o1 && o1.equals) {
+                return o1.equals(o2);
+            }
+            else {
+                return o1 === o2;
+            } })(this.allocLat, null)) {
+                for (var index129 = 0; index129 < visible.length; index129++) {
+                    var other = visible[index129];
+                    {
+                        if (other.unit > 2 && bc19.Pathing.distance(other.x, other.y, this.me.x, this.me.y) <= 36 && other.team === this.me.team && other.turn === 1) {
+                            this.allocLat[2] = other.id;
+                            break;
+                        }
+                    }
+                }
+                this.allocLat = null;
+            }
+            if (!(function (o1, o2) { if (o1 && o1.equals) {
+                return o1.equals(o2);
+            }
+            else {
+                return o1 === o2;
+            } })(this.allocate, null) && !(function (a1, a2) { if (a1 == null && a2 == null)
+                return true; if (a1 == null || a2 == null)
+                return false; if (a1.length != a2.length)
+                return false; for (var i = 0; i < a1.length; i++) {
+                if (a1[i] != a2[i])
+                    return false;
+            } return true; })(this.aKarbList, null)) {
+                var resList = void 0;
+                var otherList = void 0;
+                if (this.allocate.isKarb) {
+                    resList = this.aKarbList;
+                    otherList = this.aFuelList;
+                }
+                else {
+                    resList = this.aFuelList;
+                    otherList = this.aKarbList;
+                }
+                for (var index130 = 0; index130 < visible.length; index130++) {
+                    var other = visible[index130];
+                    {
+                        if (other.unit === 2 && bc19.Pathing.distance(other.x, other.y, this.me.x, this.me.y) <= 36 && other.team === this.me.team) {
+                            var dup = false;
+                            for (var index131 = 0; index131 < resList.length; index131++) {
+                                var res = resList[index131];
+                                if (other.id === res.worker) {
+                                    dup = true;
+                                }
+                            }
+                            for (var index132 = 0; index132 < otherList.length; index132++) {
+                                var res = otherList[index132];
+                                if (other.id === res.worker) {
+                                    dup = true;
+                                }
+                            }
+                            if (!dup) {
+                                this.allocate.worker = other.id;
+                                break;
+                            }
+                        }
+                    }
+                }
+                this.allocate = null;
+            }
+            for (var index133 = 0; index133 < this.aKarbList.length; index133++) {
+                var res = this.aKarbList[index133];
+                {
+                    if (res.worker !== -1 && !(function (o1, o2) { if (o1 && o1.equals) {
+                        return o1.equals(o2);
+                    }
+                    else {
+                        return o1 === o2;
+                    } })(res, this.allocate)) {
+                        var other = this.r.getRobot(res.worker);
+                        if ((function (o1, o2) { if (o1 && o1.equals) {
+                            return o1.equals(o2);
+                        }
+                        else {
+                            return o1 === o2;
+                        } })(other, null))
+                            res.worker = -1;
+                    }
+                }
+            }
+            for (var index134 = 0; index134 < this.aFuelList.length; index134++) {
+                var res = this.aFuelList[index134];
+                {
+                    if (res.worker !== -1 && !(function (o1, o2) { if (o1 && o1.equals) {
+                        return o1.equals(o2);
+                    }
+                    else {
+                        return o1 === o2;
+                    } })(res, this.allocate)) {
+                        var other = this.r.getRobot(res.worker);
+                        if ((function (o1, o2) { if (o1 && o1.equals) {
+                            return o1.equals(o2);
+                        }
+                        else {
+                            return o1 === o2;
+                        } })(other, null))
+                            res.worker = -1;
+                    }
+                }
+            }
+            for (var index135 = 0; index135 < this.lattice.length; index135++) {
+                var c = this.lattice[index135];
+                {
+                    if (c[2] !== -1) {
+                        if ((function (o1, o2) { if (o1 && o1.equals) {
+                            return o1.equals(o2);
+                        }
+                        else {
+                            return o1 === o2;
+                        } })(this.r.getRobot(c[2]), null) && bc19.Pathing.distance(c[1], c[0], this.me.x, this.me.y) <= 81)
+                            c[2] = -1;
+                    }
+                }
+            }
+            var preacher = false;
+            var enemySighted = false;
+            var enemyCount = 0;
+            var allyCount = 0;
+            var enemies = ([]);
+            for (var index136 = 0; index136 < visible.length; index136++) {
+                var other = visible[index136];
+                {
+                    if (other.team !== this.me.team) {
+                        enemySighted = true;
+                        enemyCount++;
+                        var enemyY = other.y;
+                        var enemyX = other.x;
+                        var enemyCor = new Array(2);
+                        enemyCor[0] = enemyY;
+                        enemyCor[1] = enemyX;
+                        /* add */ (enemies.push(enemyCor) > 0);
+                        if (other.unit === 5 && bc19.Pathing.distance(this.me.x, this.me.y, other.x, other.y) <= 16) {
+                            preacher = true;
+                            break;
+                        }
+                    }
+                    else if (other.unit > 2)
+                        allyCount++;
+                }
+            }
+            if (this.r.karbonite >= 25 && this.r.fuel >= 50 && !preacher) {
+                var a = null;
+                if (enemySighted && allyCount < enemyCount) {
+                    if (this.r.fuel > 200) {
+                        a = this.spawnSoldier(4, enemies);
+                    }
+                }
+                else if (this.me.turn % 15 === 0 || this.r.karbonite > 250) {
+                    a = this.spawnSoldier(4, enemies);
+                }
+                if (!(function (o1, o2) { if (o1 && o1.equals) {
+                    return o1.equals(o2);
+                }
+                else {
+                    return o1 === o2;
+                } })(a, null)) {
+                    return a;
+                }
+            }
+            if (this.r.karbonite >= 10 && this.r.fuel >= 50) {
+                var deadKarb = false;
+                for (var index137 = 0; index137 < this.aKarbList.length; index137++) {
+                    var res = this.aKarbList[index137];
+                    {
+                        if (res.worker === -1)
+                            deadKarb = true;
+                    }
+                }
+                if (deadKarb || this.karbList.length > 0) {
+                    var a = this.spawnWorker(true);
+                    if (!(function (o1, o2) { if (o1 && o1.equals) {
+                        return o1.equals(o2);
+                    }
+                    else {
+                        return o1 === o2;
+                    } })(a, null)) {
+                        var s = 50000;
+                        if (this.even)
+                            s = 0;
+                        s += this.allocate.x * 100;
+                        s += this.allocate.y;
+                        this.r.signal(s, 2);
+                        return a;
+                    }
+                }
+                var deadFuel = false;
+                for (var index138 = 0; index138 < this.aFuelList.length; index138++) {
+                    var res = this.aFuelList[index138];
+                    {
+                        if (res.worker === -1)
+                            deadFuel = true;
+                    }
+                }
+                if (deadFuel || this.fuelList.length > 0) {
+                    var a = this.spawnWorker(false);
+                    if (!(function (o1, o2) { if (o1 && o1.equals) {
+                        return o1.equals(o2);
+                    }
+                    else {
+                        return o1 === o2;
+                    } })(a, null)) {
+                        var s = 50000;
+                        if (this.even)
+                            s = 0;
+                        s += this.allocate.x * 100;
+                        s += this.allocate.y;
+                        this.r.signal(s, 2);
+                        return a;
+                    }
+                }
+            }
+            return null;
+        };
+        ChurchBot.prototype.spawnSoldier = function (unit, enemies) {
+            var target = null;
+            for (var i = 0; i < this.lattice.length; i++) {
+                var c = this.lattice[i];
+                if (c[2] === -1) {
+                    if (this.lblockers[c[0]][c[1]])
+                        continue;
+                    if (bc19.Pathing.distance(c[1], c[0], this.me.x, this.me.y) > 100) {
+                        /* remove */ this.lattice.splice(i, 1);
+                        i--;
+                    }
+                    else {
+                        this.allocLat = c;
+                        target = c;
+                        break;
+                    }
+                }
+            }
+            ;
+            if ((function (o1, o2) { if (o1 && o1.equals) {
+                return o1.equals(o2);
+            }
+            else {
+                return o1 === o2;
+            } })(target, null))
+                return null;
+            if (enemies.length === 0) {
+                this.blockers[target[0]][target[1]] = false;
+                var path = bc19.Pathing.rangeAST(this.r, this.me.x, this.me.y, target[1], target[0], 2, this.blockers);
+                if (!(function (a1, a2) { if (a1 == null && a2 == null)
+                    return true; if (a1 == null || a2 == null)
+                    return false; if (a1.length != a2.length)
+                    return false; for (var i = 0; i < a1.length; i++) {
+                    if (a1[i] != a2[i])
+                        return false;
+                } return true; })(path, null) && path.length > 0) {
+                    var coord = (function (a) { return a.length == 0 ? null : a.shift(); })(path);
+                    var s = 40000;
+                    if (this.even)
+                        s = 20000;
+                    s += target[1] * 100 + target[0];
+                    this.r.signal(s, 2);
+                    return this.r.buildUnit(unit, coord[1], coord[0]);
+                }
+            }
+            else {
+                var go = bc19.Pathing.retreatMove(this.r, this.me.x, this.me.y, enemies, 2, this.blockers);
+                if (!(function (o1, o2) { if (o1 && o1.equals) {
+                    return o1.equals(o2);
+                }
+                else {
+                    return o1 === o2;
+                } })(go, null)) {
+                    var s = 40000;
+                    if (this.even)
+                        s = 20000;
+                    s += target[1] * 100 + target[0];
+                    this.r.signal(s, 2);
+                    return this.r.buildUnit(unit, go[1], go[0]);
+                }
+            }
+            return null;
+        };
+        ChurchBot.prototype.spawnWorker = function (karb) {
+            var resList;
+            if (karb)
+                resList = this.aKarbList;
+            else
+                resList = this.aFuelList;
+            var found = false;
+            for (var i = 0; i < resList.length; i++) {
+                var res = resList[i];
+                if (res.worker === -1) {
+                    this.allocate = res;
+                    this.allocate.isKarb = karb;
+                    found = true;
+                    break;
+                }
+            }
+            ;
+            if (!found) {
+                var oldList = void 0;
+                if (karb)
+                    oldList = this.karbList;
+                else
+                    oldList = this.fuelList;
+                if (oldList.length > 0) {
+                    this.allocate = (function (a) { return a.length == 0 ? null : a.shift(); })(oldList);
+                    this.allocate.isKarb = karb;
+                    /* add */ (resList.push(this.allocate) > 0);
+                }
+                else
+                    return null;
+            }
+            var nullMap = (function (dims) { var allocate = function (dims) { if (dims.length == 0) {
+                return 0;
+            }
+            else {
+                var array = [];
+                for (var i = 0; i < dims[0]; i++) {
+                    array.push(allocate(dims.slice(1)));
+                }
+                return array;
+            } }; return allocate(dims); })([this.r.map.length, this.r.map[0].length]);
+            for (var y = 0; y < nullMap.length; y++) {
+                for (var x = 0; x < nullMap.length; x++) {
+                    nullMap[y][x] = 99;
+                }
+                ;
+            }
+            ;
+            var path = bc19.Pathing.rangeAST(this.r, this.me.x, this.me.y, this.allocate.x, this.allocate.y, 2, this.blockers);
+            if (!(function (a1, a2) { if (a1 == null && a2 == null)
+                return true; if (a1 == null || a2 == null)
+                return false; if (a1.length != a2.length)
+                return false; for (var i = 0; i < a1.length; i++) {
+                if (a1[i] != a2[i])
+                    return false;
+            } return true; })(path, null) && path.length > 0) {
+                var coord = (function (a) { return a.length == 0 ? null : a.shift(); })(path);
+                return this.r.buildUnit(2, coord[1], coord[0]);
+            }
             return null;
         };
         return ChurchBot;
@@ -1026,30 +1604,43 @@ var bc19;
             _this.aKarbList = null;
             _this.fuelList = null;
             _this.aFuelList = null;
+            _this.lattice = null;
             _this.resMap = null;
             _this.allocate = null;
-            _this.target = null;
+            _this.allocLat = null;
+            _this.attacked = false;
+            _this.attackFinished = false;
+            _this.xCoors = null;
+            _this.yCoors = null;
             _this.signalCount = 0;
             return _this;
         }
         CastleBot.prototype.act = function () {
             var visible = this.r.getVisibleRobots();
-            this.target = null;
             this.r.log("Turn: " + this.me.turn);
             if (this.signalCount === 0)
                 this.signalCount = -1;
             if (this.me.turn === 1) {
+                this.xCoors = (function (s) { var a = []; while (s-- > 0)
+                    a.push(0); return a; })(5000);
+                this.yCoors = (function (s) { var a = []; while (s-- > 0)
+                    a.push(0); return a; })(5000);
+                for (var i = 0; i < this.xCoors.length; i++)
+                    this.xCoors[i] = -1;
+                for (var i = 0; i < this.yCoors.length; i++)
+                    this.yCoors[i] = -1;
                 this.symmetry = bc19.Logistics.symmetry(this.r.map, this.r);
                 this.enemyCastles = bc19.Logistics.findOpposite(this.r, this.me.x, this.me.y, this.symmetry);
                 this.myCastles = ([]);
                 var myCor = new Array(3);
                 myCor[0] = this.me.y;
                 myCor[1] = this.me.x;
+                myCor[2] = this.me.id;
                 /* add */ (this.myCastles.push(myCor) > 0);
                 var firstCastle = true;
                 var count = 1;
-                for (var index127 = 0; index127 < visible.length; index127++) {
-                    var other = visible[index127];
+                for (var index139 = 0; index139 < visible.length; index139++) {
+                    var other = visible[index139];
                     {
                         if (other.castle_talk !== 0 && other.id !== this.r.id) {
                             firstCastle = false;
@@ -1075,7 +1666,6 @@ var bc19;
                     this.r.castleTalk(this.me.x + 1);
                 if (this.numCastles === 3)
                     this.r.castleTalk(this.me.x + 101);
-                this.r.log("Symmetry: " + this.symmetry);
                 var t = new bc19.Task();
                 var b = (function (dims) { var allocate = function (dims) { if (dims.length == 0) {
                     return undefined;
@@ -1097,23 +1687,57 @@ var bc19;
                     }
                     return array;
                 } }; return allocate(dims); })([this.r.map.length, this.r.map[0].length]);
-                this.r.log("Turn 1 resources0");
+                for (var y = 0; y < b.length; y++) {
+                    for (var x = 0; x < b[0].length; x++) {
+                        for (var index140 = 0; index140 < this.enemyCastles.length; index140++) {
+                            var c = this.enemyCastles[index140];
+                            {
+                                if (bc19.Pathing.distance(c[1], c[0], x, y) <= 100)
+                                    b[y][x] = true;
+                            }
+                        }
+                    }
+                    ;
+                }
+                ;
                 endLocs[this.me.y][this.me.x] = true;
                 this.resMap = bc19.Pathing.rangeBFS(this.r, endLocs, 4, b, t);
                 this.karbList = t.karbList;
+                for (var index141 = 0; index141 < this.karbList.length; index141++) {
+                    var res = this.karbList[index141];
+                    res.isKarb = true;
+                }
                 this.fuelList = t.fuelList;
                 this.aKarbList = ([]);
                 this.aFuelList = ([]);
+                this.lattice = t.lattice;
+                if (this.numCastles === 1) {
+                    var printLattice = (function (dims) { var allocate = function (dims) { if (dims.length == 0) {
+                        return 0;
+                    }
+                    else {
+                        var array = [];
+                        for (var i = 0; i < dims[0]; i++) {
+                            array.push(allocate(dims.slice(1)));
+                        }
+                        return array;
+                    } }; return allocate(dims); })([this.r.map.length, this.r.map[0].length]);
+                    for (var index142 = 0; index142 < this.lattice.length; index142++) {
+                        var l = this.lattice[index142];
+                        printLattice[l[0]][l[1]] = l[3];
+                    }
+                    bc19.Pathing.printMap(printLattice, this.r);
+                }
             }
             else if (this.me.turn <= 3) {
-                for (var index128 = 0; index128 < visible.length; index128++) {
-                    var other = visible[index128];
+                for (var index143 = 0; index143 < visible.length; index143++) {
+                    var other = visible[index143];
                     {
                         if (other.castle_talk !== 0 && other.id !== this.r.id) {
                             var c = other.castle_talk % 100 - 1;
                             var found = false;
-                            for (var index129 = 0; index129 < this.myCastles.length; index129++) {
-                                var l = this.myCastles[index129];
+                            for (var index144 = 0; index144 < this.myCastles.length; index144++) {
+                                var l = this.myCastles[index144];
                                 {
                                     if (l.length === 3 && (function (o1, o2) { if (o1 && o1.equals) {
                                         return o1.equals(o2);
@@ -1137,18 +1761,23 @@ var bc19;
                         }
                     }
                 }
-                if (this.me.turn === 2) {
-                    this.r.castleTalk(this.me.y + 1);
-                    var a = this.spawnSoldier(4);
-                    if (!(function (o1, o2) { if (o1 && o1.equals) {
-                        return o1.equals(o2);
-                    }
-                    else {
-                        return o1 === o2;
-                    } })(a, null)) {
-                        return a;
+            }
+            if (!(function (o1, o2) { if (o1 && o1.equals) {
+                return o1.equals(o2);
+            }
+            else {
+                return o1 === o2;
+            } })(this.allocLat, null)) {
+                for (var index145 = 0; index145 < visible.length; index145++) {
+                    var other = visible[index145];
+                    {
+                        if (other.unit > 2 && bc19.Pathing.distance(other.x, other.y, this.me.x, this.me.y) <= 36 && other.team === this.me.team && other.turn === 1) {
+                            this.allocLat[2] = other.id;
+                            break;
+                        }
                     }
                 }
+                this.allocLat = null;
             }
             if (!(function (o1, o2) { if (o1 && o1.equals) {
                 return o1.equals(o2);
@@ -1163,17 +1792,28 @@ var bc19;
                     return false;
             } return true; })(this.aKarbList, null)) {
                 var resList = void 0;
-                if (this.allocate.isKarb)
+                var otherList = void 0;
+                if (this.allocate.isKarb) {
                     resList = this.aKarbList;
-                else
+                    otherList = this.aFuelList;
+                }
+                else {
                     resList = this.aFuelList;
-                for (var index130 = 0; index130 < visible.length; index130++) {
-                    var other = visible[index130];
+                    otherList = this.aKarbList;
+                }
+                for (var index146 = 0; index146 < visible.length; index146++) {
+                    var other = visible[index146];
                     {
-                        if (other.unit === 2 && other.team === this.me.team) {
+                        if (other.unit === 2 && bc19.Pathing.distance(other.x, other.y, this.me.x, this.me.y) <= 36 && other.team === this.me.team) {
                             var dup = false;
-                            for (var index131 = 0; index131 < resList.length; index131++) {
-                                var res = resList[index131];
+                            for (var index147 = 0; index147 < resList.length; index147++) {
+                                var res = resList[index147];
+                                if (other.id === res.worker) {
+                                    dup = true;
+                                }
+                            }
+                            for (var index148 = 0; index148 < otherList.length; index148++) {
+                                var res = otherList[index148];
                                 if (other.id === res.worker) {
                                     dup = true;
                                 }
@@ -1187,11 +1827,14 @@ var bc19;
                 }
                 this.allocate = null;
             }
+            if (this.me.turn === 2) {
+                this.r.castleTalk(this.me.y + 1);
+            }
             if (!this.fullyInit) {
                 this.fullyInit = this.fullyInitialize();
                 if (this.fullyInit) {
-                    for (var index132 = 0; index132 < this.myCastles.length; index132++) {
-                        var c = this.myCastles[index132];
+                    for (var index149 = 0; index149 < this.myCastles.length; index149++) {
+                        var c = this.myCastles[index149];
                         {
                             if (c[0] === this.me.y && c[1] === this.me.x)
                                 continue;
@@ -1210,6 +1853,19 @@ var bc19;
                             }
                             return array;
                         } }; return allocate(dims); })([this.r.map.length, this.r.map[0].length]);
+                        for (var y = 0; y < b.length; y++) {
+                            for (var x = 0; x < b[0].length; x++) {
+                                for (var index150 = 0; index150 < this.enemyCastles.length; index150++) {
+                                    var c = this.enemyCastles[index150];
+                                    {
+                                        if (bc19.Pathing.distance(c[1], c[0], x, y) <= 100)
+                                            b[y][x] = true;
+                                    }
+                                }
+                            }
+                            ;
+                        }
+                        ;
                         var endLocs = (function (dims) { var allocate = function (dims) { if (dims.length == 0) {
                             return undefined;
                         }
@@ -1220,28 +1876,56 @@ var bc19;
                             }
                             return array;
                         } }; return allocate(dims); })([this.r.map.length, this.r.map[0].length]);
-                        for (var index133 = 0; index133 < this.myCastles.length; index133++) {
-                            var c = this.myCastles[index133];
+                        for (var index151 = 0; index151 < this.myCastles.length; index151++) {
+                            var c = this.myCastles[index151];
                             endLocs[c[0]][c[1]] = true;
                         }
                         this.resMap = bc19.Pathing.rangeBFS(this.r, endLocs, 4, b, t);
                         this.karbList = t.karbList;
+                        for (var index152 = 0; index152 < this.karbList.length; index152++) {
+                            var res = this.karbList[index152];
+                            res.isKarb = true;
+                        }
                         /* poll */ (function (a) { return a.length == 0 ? null : a.shift(); })(this.karbList);
                         this.fuelList = t.fuelList;
+                        this.lattice = t.lattice;
+                        var printLattice = (function (dims) { var allocate = function (dims) { if (dims.length == 0) {
+                            return 0;
+                        }
+                        else {
+                            var array = [];
+                            for (var i = 0; i < dims[0]; i++) {
+                                array.push(allocate(dims.slice(1)));
+                            }
+                            return array;
+                        } }; return allocate(dims); })([this.r.map.length, this.r.map[0].length]);
+                        for (var index153 = 0; index153 < this.lattice.length; index153++) {
+                            var l = this.lattice[index153];
+                            printLattice[l[0]][l[1]] = l[3];
+                        }
+                        bc19.Pathing.printMap(printLattice, this.r);
                     }
                 }
             }
-            var atk = this.attack();
-            if (this.me.turn !== 100 && !(function (o1, o2) { if (o1 && o1.equals) {
-                return o1.equals(o2);
-            }
-            else {
-                return o1 === o2;
-            } })(atk, null))
-                return atk;
             if (this.fullyInit) {
-                for (var index134 = 0; index134 < this.aKarbList.length; index134++) {
-                    var res = this.aKarbList[index134];
+                for (var index154 = 0; index154 < visible.length; index154++) {
+                    var other = visible[index154];
+                    {
+                        if (other.team === this.me.team && other.id !== this.me.id) {
+                            if (other.castle_talk === 200) {
+                                this.r.signal(7777, 25);
+                            }
+                            else if (this.me.turn % 2 === 1) {
+                                this.xCoors[other.id] = other.castle_talk;
+                            }
+                            else {
+                                this.yCoors[other.id] = other.castle_talk;
+                            }
+                        }
+                    }
+                }
+                for (var index155 = 0; index155 < this.aKarbList.length; index155++) {
+                    var res = this.aKarbList[index155];
                     {
                         if (res.worker !== -1 && !(function (o1, o2) { if (o1 && o1.equals) {
                             return o1.equals(o2);
@@ -1260,8 +1944,8 @@ var bc19;
                         }
                     }
                 }
-                for (var index135 = 0; index135 < this.aFuelList.length; index135++) {
-                    var res = this.aFuelList[index135];
+                for (var index156 = 0; index156 < this.aFuelList.length; index156++) {
+                    var res = this.aFuelList[index156];
                     {
                         if (res.worker !== -1 && !(function (o1, o2) { if (o1 && o1.equals) {
                             return o1.equals(o2);
@@ -1280,24 +1964,90 @@ var bc19;
                         }
                     }
                 }
-                if (this.me.turn % 100 === 0 && this.me.turn > 0) {
-                    if (this.numCastles === 1) {
-                        this.r.signal(20000 + this.me.x * 100 + this.me.y, 100);
+                for (var index157 = 0; index157 < this.lattice.length; index157++) {
+                    var c = this.lattice[index157];
+                    {
+                        if (c[2] !== -1) {
+                            if ((function (o1, o2) { if (o1 && o1.equals) {
+                                return o1.equals(o2);
+                            }
+                            else {
+                                return o1 === o2;
+                            } })(this.r.getRobot(c[2]), null))
+                                c[2] = -1;
+                        }
                     }
-                    else
-                        this.signalCount = this.numCastles - 1;
+                }
+                if (this.me.turn === 850) {
+                    var blitz = false;
+                    for (var index158 = 0; index158 < this.myCastles.length; index158++) {
+                        var c = this.myCastles[index158];
+                        if (this.r.getRobot(c[2]) == null)
+                            blitz = true;
+                    }
+                    if (blitz) {
+                        if (this.numCastles === 1) {
+                            var enemy = this.enemyCastles[0];
+                            this.r.signal(30000 + enemy[1] * 100 + enemy[0], 64);
+                            return null;
+                        }
+                        else
+                            this.signalCount = this.numCastles - 1;
+                    }
                 }
                 if (this.signalCount > 0) {
                     var s = 10000;
                     if (this.signalCount === 1)
-                        s = 20000;
+                        s = 30000;
                     var c = this.enemyCastles[this.signalCount];
                     s += c[1] * 100 + c[0];
-                    this.r.signal(s, 100);
+                    this.r.signal(s, 16);
                     this.signalCount--;
+                    return null;
                 }
-                if (this.r.karbonite >= 40 && this.r.fuel >= 50 && this.me.turn > 4) {
-                    var a = this.spawnSoldier(4);
+                var preacher = false;
+                var enemySighted = false;
+                var enemyCount = 0;
+                var allyCount = 0;
+                var enemies = ([]);
+                for (var index159 = 0; index159 < visible.length; index159++) {
+                    var other = visible[index159];
+                    {
+                        if (other.team !== this.me.team) {
+                            enemySighted = true;
+                            enemyCount++;
+                            var enemyY = other.y;
+                            var enemyX = other.x;
+                            var enemyCor = new Array(2);
+                            enemyCor[0] = enemyY;
+                            enemyCor[1] = enemyX;
+                            /* add */ (enemies.push(enemyCor) > 0);
+                            if (other.unit === 5 && bc19.Pathing.distance(this.me.x, this.me.y, other.x, other.y) <= 16) {
+                                preacher = true;
+                                break;
+                            }
+                        }
+                        else if (other.unit > 2)
+                            allyCount++;
+                    }
+                }
+                if (enemySighted && !this.attacked) {
+                    this.attacked = true;
+                    this.r.castleTalk(200);
+                }
+                else if (this.attacked && !enemySighted)
+                    this.attackFinished = true;
+                if (this.r.karbonite >= 25 && this.r.fuel >= 50 && !preacher) {
+                    var a = null;
+                    if (enemySighted && allyCount < enemyCount + 1) {
+                        if (this.r.fuel > 200) {
+                            a = this.spawnSoldier(4, enemies);
+                        }
+                    }
+                    else if (this.me.turn % 10 === 0 && (this.r.karbonite > 100 || (this.attackFinished && this.r.karbonite >= 50 && allyCount < 5)))
+                        a = this.spawnSoldier(4, enemies);
+                    else if (this.r.karbonite > 300)
+                        a = this.spawnSoldier(4, enemies);
                     if (!(function (o1, o2) { if (o1 && o1.equals) {
                         return o1.equals(o2);
                     }
@@ -1306,45 +2056,67 @@ var bc19;
                     } })(a, null)) {
                         return a;
                     }
+                }
+                if (enemySighted && this.r.fuel >= 10) {
+                    var a = this.attack();
+                    if (!(function (o1, o2) { if (o1 && o1.equals) {
+                        return o1.equals(o2);
+                    }
+                    else {
+                        return o1 === o2;
+                    } })(a, null))
+                        return a;
                 }
             }
-            if (this.signalCount === -1 && this.r.karbonite >= 10 && this.r.fuel >= 50 && (this.me.turn === 1 || (this.fullyInit && (this.me.turn > 100 || this.fuelList[0].priority < 5 || this.karbList[0].priority < 5)))) {
-                if (this.me.turn > 1 && (this.r.karbonite > 90 || (this.fuelList[0].priority < 5 && this.aKarbList.length > 0)) && !(function (a1, a2) { if (a1 == null && a2 == null)
-                    return true; if (a1 == null || a2 == null)
-                    return false; if (a1.length != a2.length)
-                    return false; for (var i = 0; i < a1.length; i++) {
-                    if (a1[i] != a2[i])
-                        return false;
-                } return true; })(this.fuelList, null) && this.fuelList.length > 0) {
-                    var a = this.spawnWorker(false);
-                    if (!(function (o1, o2) { if (o1 && o1.equals) {
-                        return o1.equals(o2);
-                    }
-                    else {
-                        return o1 === o2;
-                    } })(a, null)) {
-                        var s = 0;
-                        s += this.allocate.x * 100;
-                        s += this.allocate.y;
-                        this.r.signal(s, 2);
-                        return a;
+            if (this.r.karbonite >= 10 && this.r.fuel >= 50 && (this.me.turn === 1 || this.fullyInit)) {
+                var nextFuel = null;
+                for (var index160 = 0; index160 < this.aFuelList.length; index160++) {
+                    var res = this.aFuelList[index160];
+                    {
+                        if (res.worker === -1 && !res.replaced) {
+                            nextFuel = res;
+                            break;
+                        }
                     }
                 }
-                if (!(function (a1, a2) { if (a1 == null && a2 == null)
-                    return true; if (a1 == null || a2 == null)
-                    return false; if (a1.length != a2.length)
-                    return false; for (var i = 0; i < a1.length; i++) {
-                    if (a1[i] != a2[i])
-                        return false;
-                } return true; })(this.karbList, null) && this.karbList.length > 0) {
-                    var a = this.spawnWorker(true);
+                if (nextFuel == null && this.fuelList != null && this.fuelList.length > 0) {
+                    nextFuel = this.fuelList[0];
+                }
+                var nextKarb = null;
+                for (var index161 = 0; index161 < this.aKarbList.length; index161++) {
+                    var res = this.aKarbList[index161];
+                    {
+                        if (res.worker === -1 && !res.replaced) {
+                            nextKarb = res;
+                            break;
+                        }
+                    }
+                }
+                if (nextKarb == null && this.karbList != null && this.karbList.length > 0) {
+                    nextKarb = this.karbList[0];
+                }
+                var next = null;
+                if (nextKarb == null)
+                    next = nextFuel;
+                else if (nextFuel == null)
+                    next = nextKarb;
+                else {
+                    if (nextKarb.priority <= nextFuel.priority)
+                        next = nextKarb;
+                    else
+                        next = nextFuel;
+                }
+                if (next != null && (this.r.karbonite >= 85 || (bc19.Pathing.distance(next.x, next.y, this.me.x, this.me.y) <= 36 && this.r.karbonite >= 35) || (this.attackFinished && this.r.karbonite >= 60))) {
+                    var a = this.spawnWorker(next.isKarb);
                     if (!(function (o1, o2) { if (o1 && o1.equals) {
                         return o1.equals(o2);
                     }
                     else {
                         return o1 === o2;
                     } })(a, null)) {
-                        var s = 0;
+                        var s = 50000;
+                        if (this.me.turn % 2 === 0)
+                            s = 0;
                         s += this.allocate.x * 100;
                         s += this.allocate.y;
                         this.r.signal(s, 2);
@@ -1355,8 +2127,8 @@ var bc19;
             return null;
         };
         CastleBot.prototype.fullyInitialize = function () {
-            for (var index136 = 0; index136 < this.myCastles.length; index136++) {
-                var c = this.myCastles[index136];
+            for (var index162 = 0; index162 < this.myCastles.length; index162++) {
+                var c = this.myCastles[index162];
                 {
                     if (c[0] === -1 || c[1] === -1)
                         return false;
@@ -1366,19 +2138,91 @@ var bc19;
                 return false;
             return true;
         };
-        CastleBot.prototype.spawnSoldier = function (unit) {
-            if (this.target == null)
-                this.target = this.enemyCastles[0];
-            var path = bc19.Pathing.rangeAST(this.r, this.me.x, this.me.y, this.target[1], this.target[0], 2, this.blockers);
-            if (!(function (a1, a2) { if (a1 == null && a2 == null)
-                return true; if (a1 == null || a2 == null)
-                return false; if (a1.length != a2.length)
-                return false; for (var i = 0; i < a1.length; i++) {
-                if (a1[i] != a2[i])
-                    return false;
-            } return true; })(path, null) && path.length > 0) {
-                var coord = (function (a) { return a.length == 0 ? null : a.shift(); })(path);
-                return this.r.buildUnit(unit, coord[1], coord[0]);
+        CastleBot.prototype.spawnSoldier = function (unit, enemies) {
+            var target = null;
+            var min = 99999;
+            var min2 = 99999;
+            for (var i = 0; i < this.lattice.length; i++) {
+                var c = this.lattice[i];
+                if (c[2] === -1) {
+                    if (bc19.Pathing.distance(this.me.x, this.me.y, c[1], c[0]) > 100) {
+                        var found = false;
+                        for (var j = 0; j < this.xCoors.length; j++) {
+                            if (this.r.getRobot(j) == null) {
+                                this.xCoors[j] = -1;
+                                this.yCoors[j] = -1;
+                            }
+                            if (this.xCoors[j] === c[1] && this.yCoors[j] === c[0])
+                                found = true;
+                        }
+                        ;
+                        if (found)
+                            continue;
+                    }
+                    if (this.lblockers[c[0]][c[1]]) {
+                        continue;
+                    }
+                    var sum = 0;
+                    for (var index163 = 0; index163 < this.enemyCastles.length; index163++) {
+                        var e = this.enemyCastles[index163];
+                        {
+                            sum += bc19.Pathing.distance(c[1], c[0], e[1], e[0]);
+                        }
+                    }
+                    if (bc19.Pathing.distance(this.me.x, this.me.y, c[1], c[0]) <= min) {
+                        min = bc19.Pathing.distance(this.me.x, this.me.y, c[1], c[0]);
+                        if (sum < min2) {
+                            this.allocLat = c;
+                            target = c;
+                            min2 = sum;
+                        }
+                    }
+                    else
+                        break;
+                }
+            }
+            ;
+            if ((function (o1, o2) { if (o1 && o1.equals) {
+                return o1.equals(o2);
+            }
+            else {
+                return o1 === o2;
+            } })(target, null))
+                return null;
+            if (enemies.length === 0) {
+                this.blockers[target[0]][target[1]] = false;
+                var path = bc19.Pathing.rangeAST(this.r, this.me.x, this.me.y, target[1], target[0], 2, this.blockers);
+                if (!(function (a1, a2) { if (a1 == null && a2 == null)
+                    return true; if (a1 == null || a2 == null)
+                    return false; if (a1.length != a2.length)
+                    return false; for (var i = 0; i < a1.length; i++) {
+                    if (a1[i] != a2[i])
+                        return false;
+                } return true; })(path, null) && path.length > 0) {
+                    var coord = (function (a) { return a.length == 0 ? null : a.shift(); })(path);
+                    var s = 40000;
+                    if (this.me.turn % 2 === 0)
+                        s = 20000;
+                    s += target[1] * 100 + target[0];
+                    this.r.signal(s, 2);
+                    return this.r.buildUnit(unit, coord[1], coord[0]);
+                }
+            }
+            else {
+                var go = bc19.Pathing.retreatMove(this.r, this.me.x, this.me.y, enemies, 2, this.blockers);
+                if (!(function (o1, o2) { if (o1 && o1.equals) {
+                    return o1.equals(o2);
+                }
+                else {
+                    return o1 === o2;
+                } })(go, null)) {
+                    var s = 40000;
+                    if (this.me.turn % 2 === 0)
+                        s = 20000;
+                    s += target[1] * 100 + target[0];
+                    this.r.signal(s, 2);
+                    return this.r.buildUnit(unit, go[1], go[0]);
+                }
             }
             return null;
         };
@@ -1389,10 +2233,23 @@ var bc19;
             else
                 resList = this.aFuelList;
             var found = false;
-            for (var index137 = 0; index137 < resList.length; index137++) {
-                var res = resList[index137];
-                {
-                    if (res.worker === -1) {
+            for (var i = 0; i < resList.length; i++) {
+                var res = resList[i];
+                if (res.worker === -1) {
+                    if (bc19.Pathing.distance(res.x, res.y, this.me.x, this.me.y) > 36) {
+                        if (!res.replaced) {
+                            res.replaced = true;
+                            this.allocate = res;
+                            this.allocate.isKarb = karb;
+                            found = true;
+                            break;
+                        }
+                        else {
+                            /* remove */ resList.splice(i, 1);
+                            i--;
+                        }
+                    }
+                    else {
                         this.allocate = res;
                         this.allocate.isKarb = karb;
                         found = true;
@@ -1400,6 +2257,7 @@ var bc19;
                     }
                 }
             }
+            ;
             if (!found) {
                 var oldList = void 0;
                 if (karb)
@@ -1409,10 +2267,10 @@ var bc19;
                 if (oldList.length > 0) {
                     this.allocate = (function (a) { return a.length == 0 ? null : a.shift(); })(oldList);
                     this.allocate.isKarb = karb;
-                    for (var index138 = 0; index138 < this.enemyCastles.length; index138++) {
-                        var c = this.enemyCastles[index138];
+                    for (var index164 = 0; index164 < this.enemyCastles.length; index164++) {
+                        var c = this.enemyCastles[index164];
                         {
-                            if (bc19.Pathing.distance(c[1], c[0], this.allocate.x, this.allocate.y) <= 100) {
+                            if (bc19.Pathing.distance(c[1], c[0], this.allocate.x, this.allocate.y) <= 144) {
                                 this.allocate = null;
                                 return null;
                             }
@@ -1465,6 +2323,7 @@ var bc19;
             var _this = _super.call(this, r) || this;
             _this.toGo = null;
             _this.deposit = false;
+            _this.running = false;
             _this.endLocs = null;
             _this.castle = null;
             _this.Rmap = null;
@@ -1473,14 +2332,17 @@ var bc19;
             return _this;
         }
         PilgrimBot.prototype.extractSignal = function (signal) {
+            if ((Math.floor((signal / 10000 | 0)) | 0) === 0)
+                this.even = true;
             var sig = signal % 10000;
             var ycor = sig % 100;
             var xcor = (Math.floor(((sig - ycor) / 100 | 0)) | 0);
             this.toGo[1] = xcor;
             this.toGo[0] = ycor;
         };
-        PilgrimBot.prototype.nextMove = function (map) {
+        PilgrimBot.prototype.nextMove = function (map, dest) {
             var min = 9999;
+            var minDist = 9999;
             var curr;
             var nullMap = (function (dims) { var allocate = function (dims) { if (dims.length == 0) {
                 return 0;
@@ -1500,13 +2362,26 @@ var bc19;
             }
             ;
             var moves = bc19.Pathing.findRange(this.r, this.me.x, this.me.y, 4, this.blockers, nullMap);
-            for (var index139 = 0; index139 < moves.length; index139++) {
-                var x = moves[index139];
+            for (var index165 = 0; index165 < moves.length; index165++) {
+                var x = moves[index165];
                 {
                     if (map[x[0]][x[1]] < min) {
                         min = map[x[0]][x[1]];
+                        minDist = bc19.Pathing.distance(x[1], x[0], dest[1], dest[0]);
                         curr = x;
                     }
+                    if (map[x[0]][x[1]] === min) {
+                        var newDist = bc19.Pathing.distance(x[1], x[0], dest[1], dest[0]);
+                        if (newDist < minDist) {
+                            minDist = newDist;
+                            curr = x;
+                        }
+                    }
+                }
+            }
+            if (map[curr[0]][curr[1]] === map[this.me.y][this.me.x]) {
+                if (bc19.Pathing.distance(curr[1], curr[0], dest[1], dest[0]) === bc19.Pathing.distance(this.me.x, this.me.y, dest[1], dest[0])) {
+                    return null;
                 }
             }
             return curr;
@@ -1516,10 +2391,13 @@ var bc19;
             if (this.me.turn === 1) {
                 this.toGo = new Array(2);
                 this.castle = new Array(2);
-                for (var index140 = 0; index140 < visible.length; index140++) {
-                    var c = visible[index140];
+                this.symmetry = bc19.Logistics.symmetry(this.r.map, this.r);
+                for (var index166 = 0; index166 < visible.length; index166++) {
+                    var c = visible[index166];
                     {
-                        if (c.unit === 0 && this.r.isRadioing(c)) {
+                        if (c.unit <= 1 && this.r.isRadioing(c) && bc19.Pathing.distance(c.x, c.y, this.me.x, this.me.y) <= 2) {
+                            if (c.unit === 0)
+                                this.enemyCastles = (bc19.Logistics.findOpposite(this.r, c.x, c.y, this.symmetry));
                             var sig = c.signal;
                             this.castle[1] = c.x;
                             this.castle[0] = c.y;
@@ -1527,6 +2405,21 @@ var bc19;
                             break;
                         }
                     }
+                }
+                if (this.enemyCastles != null) {
+                    for (var y = 0; y < this.blockers.length; y++) {
+                        for (var x = 0; x < this.blockers[0].length; x++) {
+                            for (var index167 = 0; index167 < this.enemyCastles.length; index167++) {
+                                var c = this.enemyCastles[index167];
+                                {
+                                    if (bc19.Pathing.distance(c[1], c[0], x, y) <= 100)
+                                        this.blockers[y][x] = true;
+                                }
+                            }
+                        }
+                        ;
+                    }
+                    ;
                 }
                 this.endLocs = (function (dims) { var allocate = function (dims) { if (dims.length == 0) {
                     return undefined;
@@ -1553,17 +2446,74 @@ var bc19;
                 this.endLocs[this.castle[0]][this.castle[1]] = true;
                 this.Cmap = bc19.Pathing.rangeBFS(this.r, this.endLocs, 4, this.blockers, new bc19.Task());
             }
+            else
+                this.even = !this.even;
+            if (this.enemyCastles != null) {
+                for (var y = 0; y < this.blockers.length; y++) {
+                    for (var x = 0; x < this.blockers[0].length; x++) {
+                        for (var index168 = 0; index168 < this.enemyCastles.length; index168++) {
+                            var c = this.enemyCastles[index168];
+                            {
+                                if (bc19.Pathing.distance(c[1], c[0], x, y) <= 100)
+                                    this.blockers[y][x] = true;
+                            }
+                        }
+                    }
+                    ;
+                }
+                ;
+            }
+            if (this.me.turn % 10 === 0) {
+                this.endLocs = (function (dims) { var allocate = function (dims) { if (dims.length == 0) {
+                    return undefined;
+                }
+                else {
+                    var array = [];
+                    for (var i = 0; i < dims[0]; i++) {
+                        array.push(allocate(dims.slice(1)));
+                    }
+                    return array;
+                } }; return allocate(dims); })([this.r.map.length, this.r.map[0].length]);
+                this.endLocs[this.toGo[0]][this.toGo[1]] = true;
+                this.Rmap = bc19.Pathing.rangeBFS(this.r, this.endLocs, 4, this.blockers, new bc19.Task());
+                this.endLocs = (function (dims) { var allocate = function (dims) { if (dims.length == 0) {
+                    return undefined;
+                }
+                else {
+                    var array = [];
+                    for (var i = 0; i < dims[0]; i++) {
+                        array.push(allocate(dims.slice(1)));
+                    }
+                    return array;
+                } }; return allocate(dims); })([this.r.map.length, this.r.map[0].length]);
+                this.endLocs[this.castle[0]][this.castle[1]] = true;
+                this.Cmap = bc19.Pathing.rangeBFS(this.r, this.endLocs, 4, this.blockers, new bc19.Task());
+            }
             if (!this.deposit) {
-                var enemies = ([]);
-                for (var index141 = 0; index141 < visible.length; index141++) {
-                    var other = visible[index141];
+                for (var index169 = 0; index169 < visible.length; index169++) {
+                    var other = visible[index169];
                     {
-                        if (other.team !== this.me.team && other.unit !== 2) {
+                        if (other.x === this.castle[1] && other.y === this.castle[0] && this.r.isRadioing(other)) {
+                            if (other.signal === 7777)
+                                this.deposit = true;
+                        }
+                    }
+                }
+                var enemies = ([]);
+                this.running = false;
+                for (var index170 = 0; index170 < visible.length; index170++) {
+                    var other = visible[index170];
+                    {
+                        if (other.team !== this.me.team && other.unit !== 1 && other.unit !== 2) {
                             if (this.me.karbonite > 0 || this.me.fuel > 0) {
                                 this.deposit = true;
                                 break;
                             }
                             else {
+                                var dist = bc19.Pathing.distance(other.x, other.y, this.me.x, this.me.y);
+                                if (dist <= 64) {
+                                    this.running = true;
+                                }
                                 var enemyCoord = new Array(2);
                                 enemyCoord[1] = other.x;
                                 enemyCoord[0] = other.y;
@@ -1573,17 +2523,126 @@ var bc19;
                     }
                 }
                 if (!(enemies.length == 0)) {
-                    var move = bc19.Pathing.retreatMove(this.r, this.me.x, this.me.y, enemies, 4, this.blockers);
-                    var a = this.r.move(move[1], move[0]);
-                    if (!(function (o1, o2) { if (o1 && o1.equals) {
-                        return o1.equals(o2);
+                    if (this.running) {
+                        var move = bc19.Pathing.retreatMove(this.r, this.me.x, this.me.y, enemies, 4, this.blockers);
+                        var a = this.r.move(move[1], move[0]);
+                        if (!(function (o1, o2) { if (o1 && o1.equals) {
+                            return o1.equals(o2);
+                        }
+                        else {
+                            return o1 === o2;
+                        } })(a, null))
+                            return a;
                     }
                     else {
-                        return o1 === o2;
-                    } })(a, null))
-                        return a;
+                        return null;
+                    }
                 }
                 if (this.me.fuel === 100 || this.me.karbonite === 20) {
+                    var dRange = false;
+                    var castleDist = 9999;
+                    for (var index171 = 0; index171 < visible.length; index171++) {
+                        var other = visible[index171];
+                        {
+                            if (other.team === this.me.team && (other.unit === 0 || other.unit === 1)) {
+                                var newCastleDist = bc19.Pathing.distance(other.x, other.y, this.me.x, this.me.y);
+                                if (newCastleDist <= 36 && newCastleDist < castleDist) {
+                                    castleDist = newCastleDist;
+                                    dRange = true;
+                                    this.castle[0] = other.y;
+                                    this.castle[1] = other.x;
+                                    this.endLocs = (function (dims) { var allocate = function (dims) { if (dims.length == 0) {
+                                        return undefined;
+                                    }
+                                    else {
+                                        var array = [];
+                                        for (var i = 0; i < dims[0]; i++) {
+                                            array.push(allocate(dims.slice(1)));
+                                        }
+                                        return array;
+                                    } }; return allocate(dims); })([this.r.map.length, this.r.map[0].length]);
+                                    this.endLocs[this.castle[0]][this.castle[1]] = true;
+                                    this.Cmap = bc19.Pathing.rangeBFS(this.r, this.endLocs, 4, this.blockers, new bc19.Task());
+                                }
+                            }
+                        }
+                    }
+                    if (!dRange && this.r.karbonite >= 50 && this.r.fuel >= 400) {
+                        var range = 36;
+                        var steps = (Math.floor(Math.sqrt(range)) | 0);
+                        var churchTile = ([]);
+                        var maxResources = 0;
+                        var minDist = 9999;
+                        var toBuild = new Array(2);
+                        for (var dy = -1; dy <= 1; dy++) {
+                            for (var dx = -1; dx <= 1; dx++) {
+                                var xadj = this.me.x + dx;
+                                var yadj = this.me.y + dy;
+                                if (bc19.Pathing.checkBounds(this.r, xadj, yadj, this.blockers) && !this.r.getFuelMap()[yadj][xadj] && !this.r.getKarboniteMap()[yadj][xadj]) {
+                                    var tile = new Array(2);
+                                    tile[1] = dx;
+                                    tile[0] = dy;
+                                    /* add */ (churchTile.push(tile) > 0);
+                                }
+                            }
+                            ;
+                        }
+                        ;
+                        for (var index172 = 0; index172 < churchTile.length; index172++) {
+                            var tile = churchTile[index172];
+                            {
+                                var numResources = 0;
+                                var newDist = 0;
+                                for (var y = 0 - steps; y <= steps; y++) {
+                                    for (var x = 0 - steps; x <= steps; x++) {
+                                        var dist = bc19.Pathing.distance(0, 0, x, y);
+                                        var xCor = tile[1] + x + this.me.x;
+                                        var yCor = tile[0] + y + this.me.y;
+                                        if (dist <= range && bc19.Pathing.checkBounds(this.r, xCor, yCor, this.blockers) && (this.r.getFuelMap()[yCor][xCor] || this.r.getKarboniteMap()[yCor][xCor])) {
+                                            numResources += 1;
+                                            newDist += bc19.Pathing.distance(this.me.x + tile[1], this.me.y + tile[0], xCor, yCor);
+                                        }
+                                    }
+                                    ;
+                                }
+                                ;
+                                if (numResources > maxResources) {
+                                    maxResources = numResources;
+                                    minDist = newDist;
+                                    this.castle[1] = this.me.x + tile[1];
+                                    this.castle[0] = this.me.y + tile[0];
+                                    toBuild[1] = tile[1];
+                                    toBuild[0] = tile[0];
+                                }
+                                if (numResources === maxResources) {
+                                    if (newDist < minDist) {
+                                        minDist = newDist;
+                                        this.castle[1] = this.me.x + tile[1];
+                                        this.castle[0] = this.me.y + tile[0];
+                                        toBuild[1] = tile[1];
+                                        toBuild[0] = tile[0];
+                                    }
+                                }
+                            }
+                        }
+                        this.endLocs = (function (dims) { var allocate = function (dims) { if (dims.length == 0) {
+                            return undefined;
+                        }
+                        else {
+                            var array = [];
+                            for (var i = 0; i < dims[0]; i++) {
+                                array.push(allocate(dims.slice(1)));
+                            }
+                            return array;
+                        } }; return allocate(dims); })([this.r.map.length, this.r.map[0].length]);
+                        this.endLocs[this.castle[0]][this.castle[1]] = true;
+                        this.Cmap = bc19.Pathing.rangeBFS(this.r, this.endLocs, 4, this.blockers, new bc19.Task());
+                        var send = 1;
+                        if (this.even)
+                            send = 2;
+                        this.r.signal(send, 2);
+                        return this.r.buildUnit(1, toBuild[1], toBuild[0]);
+                    }
                     this.deposit = true;
                 }
             }
@@ -1592,14 +2651,126 @@ var bc19;
                 return this.r.give(this.castle[1] - this.me.x, this.castle[0] - this.me.y, this.me.karbonite, this.me.fuel);
             }
             else if (this.me.x === this.toGo[1] && this.me.y === this.toGo[0] && !this.deposit) {
+                if (this.me.karbonite === 0 && this.me.fuel === 0) {
+                    var dRange = false;
+                    var castleDist = 9999;
+                    for (var index173 = 0; index173 < visible.length; index173++) {
+                        var other = visible[index173];
+                        {
+                            if (other.team === this.me.team && (other.unit === 0 || other.unit === 1)) {
+                                var newCastleDist = bc19.Pathing.distance(other.x, other.y, this.me.x, this.me.y);
+                                if (newCastleDist <= 36 && newCastleDist < castleDist) {
+                                    castleDist = newCastleDist;
+                                    dRange = true;
+                                    this.castle[0] = other.y;
+                                    this.castle[1] = other.x;
+                                    this.endLocs = (function (dims) { var allocate = function (dims) { if (dims.length == 0) {
+                                        return undefined;
+                                    }
+                                    else {
+                                        var array = [];
+                                        for (var i = 0; i < dims[0]; i++) {
+                                            array.push(allocate(dims.slice(1)));
+                                        }
+                                        return array;
+                                    } }; return allocate(dims); })([this.r.map.length, this.r.map[0].length]);
+                                    this.endLocs[this.castle[0]][this.castle[1]] = true;
+                                    this.Cmap = bc19.Pathing.rangeBFS(this.r, this.endLocs, 4, this.blockers, new bc19.Task());
+                                }
+                            }
+                        }
+                    }
+                    if (!dRange && this.r.karbonite >= 100 && this.r.fuel >= 400) {
+                        var range = 36;
+                        var steps = (Math.floor(Math.sqrt(range)) | 0);
+                        var churchTile = ([]);
+                        var maxResources = 0;
+                        var minDist = 9999;
+                        var toBuild = new Array(2);
+                        for (var dy = -1; dy <= 1; dy++) {
+                            for (var dx = -1; dx <= 1; dx++) {
+                                var xadj = this.me.x + dx;
+                                var yadj = this.me.y + dy;
+                                if (bc19.Pathing.checkBounds(this.r, xadj, yadj, this.blockers) && !this.r.getFuelMap()[yadj][xadj] && !this.r.getKarboniteMap()[yadj][xadj]) {
+                                    var tile = new Array(2);
+                                    tile[1] = dx;
+                                    tile[0] = dy;
+                                    /* add */ (churchTile.push(tile) > 0);
+                                }
+                            }
+                            ;
+                        }
+                        ;
+                        for (var index174 = 0; index174 < churchTile.length; index174++) {
+                            var tile = churchTile[index174];
+                            {
+                                var numResources = 0;
+                                var newDist = 0;
+                                for (var y = 0 - steps; y <= steps; y++) {
+                                    for (var x = 0 - steps; x <= steps; x++) {
+                                        var dist = bc19.Pathing.distance(0, 0, x, y);
+                                        var xCor = tile[1] + x + this.me.x;
+                                        var yCor = tile[0] + y + this.me.y;
+                                        if (dist <= range && bc19.Pathing.checkBounds(this.r, xCor, yCor, this.blockers) && (this.r.getFuelMap()[yCor][xCor] || this.r.getKarboniteMap()[yCor][xCor])) {
+                                            numResources += 1;
+                                            newDist += bc19.Pathing.distance(this.me.x + tile[1], this.me.y + tile[0], xCor, yCor);
+                                        }
+                                    }
+                                    ;
+                                }
+                                ;
+                                if (numResources > maxResources) {
+                                    maxResources = numResources;
+                                    minDist = newDist;
+                                    this.castle[1] = this.me.x + tile[1];
+                                    this.castle[0] = this.me.y + tile[0];
+                                    toBuild[1] = tile[1];
+                                    toBuild[0] = tile[0];
+                                }
+                                if (numResources === maxResources) {
+                                    if (newDist < minDist) {
+                                        minDist = newDist;
+                                        this.castle[1] = this.me.x + tile[1];
+                                        this.castle[0] = this.me.y + tile[0];
+                                        toBuild[1] = tile[1];
+                                        toBuild[0] = tile[0];
+                                    }
+                                }
+                            }
+                        }
+                        this.endLocs = (function (dims) { var allocate = function (dims) { if (dims.length == 0) {
+                            return undefined;
+                        }
+                        else {
+                            var array = [];
+                            for (var i = 0; i < dims[0]; i++) {
+                                array.push(allocate(dims.slice(1)));
+                            }
+                            return array;
+                        } }; return allocate(dims); })([this.r.map.length, this.r.map[0].length]);
+                        this.endLocs[this.castle[0]][this.castle[1]] = true;
+                        this.Cmap = bc19.Pathing.rangeBFS(this.r, this.endLocs, 4, this.blockers, new bc19.Task());
+                        var send = 1;
+                        if (this.even)
+                            send = 2;
+                        this.r.signal(send, 2);
+                        return this.r.buildUnit(1, toBuild[1], toBuild[0]);
+                    }
+                }
                 return this.r.mine();
             }
             if (this.deposit) {
-                var move = this.nextMove(this.Cmap);
+                var move = this.nextMove(this.Cmap, this.castle);
+                if (move == null) {
+                    return null;
+                }
                 return this.r.move(move[1] - this.me.x, move[0] - this.me.y);
             }
             else {
-                var move = this.nextMove(this.Rmap);
+                var move = this.nextMove(this.Rmap, this.toGo);
+                if (move == null) {
+                    return null;
+                }
                 return this.r.move(move[1] - this.me.x, move[0] - this.me.y);
             }
         };
@@ -1622,9 +2793,10 @@ var bc19;
             _this.castleId = 0;
             _this.Rmap = null;
             _this.strat = 0;
-            _this.__attack = false;
+            _this.ready = false;
+            _this.church = false;
             _this.targets = ([]);
-            _this.__attack = false;
+            _this.strat = 0;
             return _this;
         }
         ProphetBot.prototype.calcMap = function () {
@@ -1638,24 +2810,35 @@ var bc19;
                 }
                 return array;
             } }; return allocate(dims); })([this.r.map.length, this.r.map[0].length]);
-            for (var index142 = 0; index142 < this.targets.length; index142++) {
-                var c = this.targets[index142];
-                {
+            if (!this.ready) {
+                this.endLocs[this.toGo[0]][this.toGo[1]] = true;
+            }
+            else {
+                for (var index175 = 0; index175 < this.targets.length; index175++) {
+                    var c = this.targets[index175];
                     this.endLocs[c[0]][c[1]] = true;
                 }
             }
             this.Rmap = bc19.Pathing.rangeBFS(this.r, this.endLocs, 4, this.blockers, new bc19.Task());
         };
-        ProphetBot.prototype.extractSignal = function (signal) {
-            this.strat = (Math.floor((signal / 10000 | 0)) | 0);
+        ProphetBot.prototype.extractSig = function (signal) {
+            var st = (Math.floor((signal / 10000 | 0)) | 0);
+            var sig = signal % 10000;
+            var ycor = sig % 100;
+            var xcor = (Math.floor(((sig - ycor) / 100 | 0)) | 0);
             if (this.strat === 0) {
+                if (st === 2)
+                    this.even = true;
+                this.strat = st;
+                this.toGo[0] = ycor;
+                this.toGo[1] = xcor;
+                this.calcMap();
                 return;
             }
-            else if (this.strat === 1 || this.strat === 2) {
+            if (this.church)
+                return;
+            if (st === 1 || st === 3) {
                 var targ = new Array(2);
-                var sig = signal % 10000;
-                var ycor = sig % 100;
-                var xcor = (Math.floor(((sig - ycor) / 100 | 0)) | 0);
                 targ[1] = xcor;
                 targ[0] = ycor;
                 var have = false;
@@ -1669,9 +2852,41 @@ var bc19;
                 if (!have) {
                     /* add */ (this.targets.push(targ) > 0);
                 }
-                if (this.strat === 2) {
+                if (st === 3) {
+                    this.ready = true;
                     this.calcMap();
-                    this.__attack = true;
+                }
+            }
+        };
+        ProphetBot.prototype.extractSignal = function (signal) {
+            this.strat = (Math.floor((signal / 10000 | 0)) | 0);
+            if (this.strat === 0) {
+                return;
+            }
+            else if (this.strat === 1 || this.strat === 2 || this.strat === 3) {
+                var targ = new Array(2);
+                var sig = signal % 10000;
+                var ycor = sig % 100;
+                var xcor = (Math.floor(((sig - ycor) / 100 | 0)) | 0);
+                this.toGo[0] = ycor;
+                this.toGo[1] = xcor;
+                targ[1] = xcor;
+                targ[0] = ycor;
+                var have = false;
+                for (var i = 0; i < this.targets.length; i++) {
+                    if (this.targets[i][1] === xcor && this.targets[i][0] === ycor) {
+                        have = true;
+                        break;
+                    }
+                }
+                ;
+                if (!have) {
+                    /* add */ (this.targets.push(targ) > 0);
+                }
+                if (this.strat === 2 || this.strat === 3) {
+                    if (this.strat === 3)
+                        this.ready = true;
+                    this.calcMap();
                 }
             }
         };
@@ -1696,8 +2911,8 @@ var bc19;
             }
             ;
             var moves = bc19.Pathing.findRange(this.r, this.me.x, this.me.y, 4, this.blockers, nullMap);
-            for (var index143 = 0; index143 < moves.length; index143++) {
-                var x = moves[index143];
+            for (var index176 = 0; index176 < moves.length; index176++) {
+                var x = moves[index176];
                 {
                     if (map[x[0]][x[1]] < min) {
                         min = map[x[0]][x[1]];
@@ -1712,18 +2927,18 @@ var bc19;
             if (this.me.turn === 1) {
                 this.toGo = new Array(2);
                 this.castle = new Array(2);
-                for (var index144 = 0; index144 < visible.length; index144++) {
-                    var c = visible[index144];
+                for (var index177 = 0; index177 < visible.length; index177++) {
+                    var c = visible[index177];
                     {
-                        if (c.unit === 0 && c.team === this.me.team) {
+                        if (c.unit <= 1 && c.team === this.me.team && bc19.Pathing.distance(c.x, c.y, this.me.x, this.me.y) <= 2) {
                             this.castleId = c.id;
                             this.castle[1] = c.x;
                             this.castle[0] = c.y;
                             var symmetry = bc19.Logistics.symmetry(this.r.map, this.r);
-                            {
-                                var array146 = bc19.Logistics.findOpposite(this.r, this.castle[1], this.castle[0], symmetry);
-                                for (var index145 = 0; index145 < array146.length; index145++) {
-                                    var coor = array146[index145];
+                            if (c.unit === 0) {
+                                var array179 = bc19.Logistics.findOpposite(this.r, this.castle[1], this.castle[0], symmetry);
+                                for (var index178 = 0; index178 < array179.length; index178++) {
+                                    var coor = array179[index178];
                                     /* add */ (this.targets.push(coor) > 0);
                                 }
                             }
@@ -1731,46 +2946,57 @@ var bc19;
                         }
                     }
                 }
-                this.calcMap();
             }
-            this.castleBot = this.r.getRobot(this.castleId);
-            if (this.castleBot != null && this.r.isRadioing(this.castleBot) && this.strat !== 2) {
-                var sig = this.castleBot.signal;
-                this.r.log("Signal: " + sig);
-                this.extractSignal(sig);
-                if (this.strat === 2) {
-                    this.r.log("ATTTCK");
+            else
+                this.even = !this.even;
+            for (var index180 = 0; index180 < visible.length; index180++) {
+                var other = visible[index180];
+                {
+                    if (other.x === this.castle[1] && other.y === this.castle[0] && this.r.isRadioing(other)) {
+                        var sig = other.signal;
+                        if ((Math.floor((sig / 10000 | 0)) | 0) !== 0)
+                            this.extractSig(sig);
+                    }
                 }
             }
-            for (var i = 0; i < this.targets.length; i++) {
-                var c = this.targets[i];
-                var dist = bc19.Pathing.distance(c[1], c[0], this.me.x, this.me.y);
-                if (dist <= 8) {
-                    var found = false;
-                    for (var index147 = 0; index147 < visible.length; index147++) {
-                        var g = visible[index147];
-                        {
-                            if (g.unit === 0) {
-                                found = true;
-                                break;
+            if (this.even)
+                this.r.castleTalk(this.toGo[1]);
+            else
+                this.r.castleTalk(this.toGo[0]);
+            if (this.ready) {
+                for (var i = 0; i < this.targets.length; i++) {
+                    var c = this.targets[i];
+                    var dist = bc19.Pathing.distance(c[1], c[0], this.me.x, this.me.y);
+                    if (dist <= 8) {
+                        var found = false;
+                        for (var index181 = 0; index181 < visible.length; index181++) {
+                            var g = visible[index181];
+                            {
+                                if (g.unit === 0 && g.team !== this.me.team) {
+                                    found = true;
+                                    break;
+                                }
                             }
                         }
-                    }
-                    if (!found) {
-                        /* remove */ this.targets.splice(i, 1);
-                        this.calcMap();
-                        i--;
+                        if (!found) {
+                            /* remove */ this.targets.splice(i, 1);
+                            this.calcMap();
+                            i--;
+                        }
                     }
                 }
+                ;
             }
-            ;
             var enemySeen = false;
             var minRange = false;
             var enemies = ([]);
-            for (var index148 = 0; index148 < visible.length; index148++) {
-                var other = visible[index148];
+            var preacher = false;
+            for (var index182 = 0; index182 < visible.length; index182++) {
+                var other = visible[index182];
                 {
-                    if (other.team !== this.me.team) {
+                    if (this.r.isVisible(other) && other.team !== this.me.team) {
+                        if (other.unit === 5)
+                            preacher = true;
                         enemySeen = true;
                         var dist = bc19.Pathing.distance(other.x, other.y, this.me.x, this.me.y);
                         var enemyCoord = new Array(2);
@@ -1778,14 +3004,14 @@ var bc19;
                         enemyCoord[0] = other.y;
                         /* add */ (enemies.push(enemyCoord) > 0);
                         this.r.log("Enemy At: " + other.x + "," + other.y);
-                        if (dist <= 16) {
+                        if (dist <= 16 || (preacher && bc19.Pathing.distance(other.x, other.y, this.me.x, this.me.y) < 25)) {
                             minRange = true;
                             this.r.log("Start Running");
                         }
                     }
                 }
             }
-            if (minRange) {
+            if (minRange || (preacher && bc19.Pathing.distance(this.castle[1], this.castle[0], this.me.x, this.me.y) <= 2)) {
                 var move = bc19.Pathing.retreatMove(this.r, this.me.x, this.me.y, enemies, 4, this.blockers);
                 var a = this.r.move(move[1], move[0]);
                 if (!(function (o1, o2) { if (o1 && o1.equals) {
@@ -1806,20 +3032,18 @@ var bc19;
                 } })(atk, null))
                     return atk;
             }
-            if (this.me.turn <= 4 || this.strat === 2 || this.r.fuelMap[this.me.y][this.me.x] || this.r.karboniteMap[this.me.y][this.me.x]) {
-                var move = this.nextMove(this.Rmap);
-                var a = this.r.move(move[1] - this.me.x, move[0] - this.me.y);
-                if (!(function (o1, o2) { if (o1 && o1.equals) {
-                    return o1.equals(o2);
+            if (this.ready || !(this.me.x === this.toGo[1] && this.me.y === this.toGo[0]) || this.r.fuelMap[this.me.y][this.me.x] || this.r.karboniteMap[this.me.y][this.me.x]) {
+                if (bc19.Pathing.distance(this.me.x, this.me.y, this.toGo[1], this.toGo[0]) > 4 || !this.blockers[this.toGo[0]][this.toGo[1]]) {
+                    var move = this.nextMove(this.Rmap);
+                    var a = this.r.move(move[1] - this.me.x, move[0] - this.me.y);
+                    if (!(function (o1, o2) { if (o1 && o1.equals) {
+                        return o1.equals(o2);
+                    }
+                    else {
+                        return o1 === o2;
+                    } })(a, null))
+                        return a;
                 }
-                else {
-                    return o1 === o2;
-                } })(a, null))
-                    return a;
-            }
-            if (this.__attack) {
-                var move = this.nextMove(this.Rmap);
-                return this.r.move(move[1] - this.me.x, move[0] - this.me.y);
             }
             return null;
         };

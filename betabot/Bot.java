@@ -39,6 +39,7 @@ public class Bot{
 			}
 		}
 		
+		
 	}
 	public Action act(){
 		return null;
